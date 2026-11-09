@@ -165,6 +165,9 @@ form input:focus {
 .meal-description {
   margin-bottom: 1rem;
 }
+.meal-card button {
+  margin-top: 1rem;
+}
 
 .shop-list {
   border: 1px solid black;

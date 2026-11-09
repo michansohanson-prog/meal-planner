@@ -33,7 +33,7 @@
         <div class="formrow">
         <label for="mealLink">Link to recipe:</label>
         <input id="mealLink" type="url" ></div>
-        <button id="mealBtn" type="submit">Add to Meals</button>
+        <button id="mealBtn" data-action="mealBtn" type="submit">Add to Meals</button>
       </form>
       <section class="meals" id="meals">
         <div class="meal-card">
@@ -42,6 +42,7 @@
           <p class="meal-description">A brief description of the meal.</p>
           <a href="https://google.com">Link to Recipe</a>
           <a href="https://michansohanson-prog.github.io/odin-recipes/" target="_blank">Recipe Website</a>
+          <div><button class="removeBtn" data-action="removeMealBtn">Remove Meal</button></div>
         </div>
       </section>
       <section class="shop-list" id="shop-list">
@@ -51,14 +52,14 @@
           type="text"
           placeholder="Looking to protect yourself, or deal some damage?"
         />
-        <button type="submit" id="shopAddBtn">Add to List</button>
+        <button type="submit" id="shopAddBtn" data-action="shopBtn">Add to List</button>
         <ul class="shopListEntries">
           <li>
             <div>
               <input id="listItemCheckbox" type="checkbox" />
               <label for="listItemCheckbox">Example item</label>
             </div>
-            <button class="removeBtn">Remove item</button>
+            <button class="removeBtn" data-action="removeShopBtn">Remove item</button>
           </li>
         </ul>
       </section>
@@ -69,14 +70,14 @@
           type="text"
           placeholder="Whatcha got already?"
         />
-        <button type="submit" id="inventoryAddBtn">Add to Inventory</button>
+        <button type="submit" id="inventoryAddBtn" data-action="inventoryBtn">Add to Inventory</button>
         <ul class="inventoryEntries">
           <li>
             <div>
               <input id="inventoryCheckbox" type="checkbox"/>
               <label for="inventoryCheckbox">Example Inventory item</label>
               </div>
-              <button class="removeBtn">Remove item</button>
+              <button class="removeBtn" data-action="removeInventoryBtn">Remove item</button>
             </div>
           </li>
         </ul>
