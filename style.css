@@ -41,6 +41,7 @@ nav {
   top: 0;
   right: 0;
   left: 0;
+  z-index: 1000;
 }
 .homeRecipes {
   display: flex;
@@ -57,12 +58,12 @@ header {
   margin-top: 3.2rem;
   background: linear-gradient(135deg, darkblue, lightblue, darkblue);
   text-align: center;
-  font-size: 2rem;
+  font-size: 1.5rem;
   text-shadow: 4px 4px 8px black;
-  padding: 2rem;
+  padding: 2rem 1rem;
   border: 1px solid black;
 }
-header h1 {
+header h2 {
   display: inline-block;
   padding: 1rem;
   background: linear-gradient(
@@ -74,8 +75,65 @@ header h1 {
   border: 1px solid black;
   border-radius: 2rem;
   box-shadow: 8px 8px 16px black;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.login-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(
+    135deg,
+    rgb(116, 87, 16),
+    rgb(212, 190, 134),
+    goldenrod
+  );
+  padding: 1rem;
 }
 
+.login-card {
+  padding: 2rem;
+  border: 1px solid black;
+  border-radius: 2rem;
+  background: linear-gradient(135deg, darkblue, lightblue, darkblue);
+  box-shadow: 8px 8px 16px black;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.login-card h2,
+.login-card h3 {
+  margin-bottom: 1rem;
+}
+
+.profile-entries {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.profile-entries li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+}
+
+.profile-select-btn {
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 1.1rem;
+  cursor: pointer;
+  text-align: left;
+  flex-grow: 1;
+}
 main {
   padding: 2rem;
   background: linear-gradient(
@@ -311,10 +369,9 @@ form input:focus {
     goldenrod
   );
   text-align: center;
-  margin: auto; /* Ensures perfect centering */
+  margin: auto;
 }
 
-/* Dim and blur the background when the modal pops up */
 #confirmModal::backdrop {
   background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(3px);
@@ -357,7 +414,7 @@ form input:focus {
 }
 
 #confirmYes {
-  background-color: #e53935; /* Vibrant pop color for the delete action */
+  background-color: #e53935;
   color: white;
 }
 
@@ -365,6 +422,7 @@ form input:focus {
   background-color: #e0e0e0;
   color: #333;
 }
+
 @media (max-width: 768px) {
   .formrow {
     flex-direction: column;

@@ -4,85 +4,109 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Meal Planner</title>
-    <link rel="stylesheet" href="style.css" />
-    <script src="main.js" defer></script>
+    <link rel="stylesheet" href="style.css?v=1.2" />
+    <script src="main.js?v=1.2" defer></script>
   </head>
   <body>
-    <nav>
-      <div class="homeRecipes">
-        <a href="#home">Home</a
-        ><a
-          href="https://michansohanson-prog.github.io/odin-recipes/"
-          target="_blank"
-          >Recipes</a
-        >
-      </div>
-      <ul>
-        <li><a href="#meals">Meals</a></li>
-        <li><a href="#shop-list">Shopping List</a></li>
-        <li><a href="#inventory">Inventory</a></li>
-      </ul>
-    </nav>
-    <header>
-      <h1>Food?</h1>
-    </header>
-    <main>
-      <form>
-        <h2>Enter a New Meal</h2>
-        <div class="formrow">
-          <label for="mealName">Meal Name:</label>
+    <!-- Login Screen View -->
+    <div id="loginContainer" class="login-screen">
+      <div class="login-card">
+        <h2>Who's Eating?</h2>
+        <form id="loginForm">
           <input
-            id="mealName"
+            id="userNameInput"
             type="text"
-            placeholder="What's for Dinner?"
+            placeholder="Enter your name..."
             required
           />
-        </div>
-        <div class="formrow">
-          <label for="mealDate">Date:</label>
-          <input id="mealDate" type="date" placeholder="" />
-        </div>
-        <div class="formrow">
-          <label for="mealDesc">What's it like?</label>
-          <input id="mealDesc" type="text" placeholder="Is it...tasty?" />
-        </div>
-        <div class="formrow">
-          <label for="mealLink">Link to recipe:</label>
-          <input id="mealLink" type="url" />
-        </div>
-        <button id="mealBtn" data-action="mealBtn" type="submit">
-          Add to Meals
-        </button>
-      </form>
-      <div class="mealsContainer">
-        <h2>Meals</h2>
-        <section class="meals" id="meals"></section>
+          <button type="submit" id="addProfileBtn" class="primary-btn">
+            Add / Login
+          </button>
+        </form>
+        <h3>Saved Profiles</h3>
+        <ul id="profileList" class="profile-entries"></ul>
       </div>
-      <section class="shop-list" id="shop-list">
-        <h2>Shopping List</h2>
-        <input
-          id="shopListInput"
-          type="text"
-          placeholder="Looking to protect yourself, or deal some damage?"
-        />
-        <button type="submit" id="shopAddBtn" data-action="shopBtn">
-          Add to List
-        </button>
-        <ul class="shopListEntries"></ul>
-      </section>
-      <section class="inventory" id="inventory">
-        <h2>Inventory</h2>
-        <input
-          id="inventoryInput"
-          type="text"
-          placeholder="Whatcha got already?"
-        />
-        <button type="submit" id="inventoryAddBtn" data-action="inventoryBtn">
-          Add to Inventory
-        </button>
-        <ul class="inventoryEntries"></ul>
-      </section>
-    </main>
+    </div>
+
+    <!-- Main App Container (Hidden by default until logged in) -->
+    <div id="appContainer" style="display: none">
+      <nav>
+        <div class="homeRecipes">
+          <a href="#home">Home</a>
+          <a
+            href="https://michansohanson-prog.github.io/odin-recipes/"
+            target="_blank"
+            >Recipes</a
+          >
+        </div>
+        <ul class="nav-links">
+          <li><a href="#meals">Meals</a></li>
+          <li><a href="#shop-list">Shopping List</a></li>
+          <li><a href="#inventory">Inventory</a></li>
+          <li><a href="#" id="logoutBtn">Switch User</a></li>
+        </ul>
+      </nav>
+      <header>
+        <h2 id="appHeaderTitle">Meal Planner</h2>
+      </header>
+      <main>
+        <form>
+          <h2>Enter a New Meal</h2>
+          <div class="formrow">
+            <label for="mealName">Meal Name:</label>
+            <input
+              id="mealName"
+              type="text"
+              placeholder="What's for Dinner?"
+              required
+            />
+          </div>
+          <div class="formrow">
+            <label for="mealDate">Date:</label>
+            <input id="mealDate" type="date" placeholder="" />
+          </div>
+          <div class="formrow">
+            <label for="mealDesc">What's it like?</label>
+            <input id="mealDesc" type="text" placeholder="Is it...tasty?" />
+          </div>
+          <div class="formrow">
+            <label for="mealLink">Link to recipe:</label>
+            <input id="mealLink" type="url" />
+          </div>
+          <button id="mealBtn" data-action="mealBtn" type="submit">
+            Add to Meals
+          </button>
+        </form>
+        <div class="mealsContainer">
+          <h2>Meals</h2>
+          <section class="meals" id="meals"></section>
+        </div>
+        <section class="shop-list" id="shop-list">
+          <h2>Shopping List</h2>
+          <input
+            id="shopListInput"
+            type="text"
+            placeholder="Looking to protect yourself, or deal some damage?"
+          />
+          <button type="submit" id="shopAddBtn" data-action="shopBtn">
+            Add to List
+          </button>
+          <ul class="shopListEntries"></ul>
+        </section>
+        <section class="inventory" id="inventory">
+          <h2>Inventory</h2>
+          <input
+            id="inventoryInput"
+            type="text"
+            placeholder="Whatcha got already?"
+          />
+          <button type="submit" id="inventoryAddBtn" data-action="inventoryBtn">
+            Add to Inventory
+          </button>
+          <ul class="inventoryEntries"></ul>
+        </section>
+      </main>
+    </div>
   </body>
   <dialog id="confirmModal">
     <h3>Tasty Planner</h3>
