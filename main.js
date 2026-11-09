@@ -94,7 +94,7 @@ async function loadUserData(username) {
   }
 }
 
-// Realtime sync listener for live updates across devices
+// Realtime sync listener for live updates across devices (filters removed to catch DELETE events reliably)
 function setupRealtimeSync(username) {
   if (realtimeChannel) window.supabaseClient.removeChannel(realtimeChannel);
 
@@ -106,7 +106,6 @@ function setupRealtimeSync(username) {
         event: "*",
         schema: "public",
         table: "meals",
-        filter: `profile_name=eq.${username}`,
       },
       () => loadUserData(username),
     )
@@ -116,7 +115,6 @@ function setupRealtimeSync(username) {
         event: "*",
         schema: "public",
         table: "shopping_list",
-        filter: `profile_name=eq.${username}`,
       },
       () => loadUserData(username),
     )
@@ -126,7 +124,6 @@ function setupRealtimeSync(username) {
         event: "*",
         schema: "public",
         table: "inventory",
-        filter: `profile_name=eq.${username}`,
       },
       () => loadUserData(username),
     )
