@@ -1,3 +1,11 @@
+const SUPABASE_URL = "https://pjefuqlcnauluvfeunkw.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_e7kD3a75k-2FjMyCyURsPg_Kp-SBzpi";
+
+// Completely unique global reference to avoid any variable re-declaration errors
+window.supabaseClient =
+  window.supabaseClient ||
+  window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 const mealNameInput = document.querySelector("#mealName");
 const mealDateInput = document.querySelector("#mealDate");
 const mealDescInput = document.querySelector("#mealDesc");
@@ -19,8 +27,10 @@ const profileList = document.querySelector("#profileList");
 const logoutBtn = document.querySelector("#logoutBtn");
 const appHeaderTitle = document.querySelector("#appHeaderTitle");
 
+let realtimeChannel = null;
+
 // Check active session on load
-function checkSession() {
+async function checkSession() {
   const activeUser = localStorage.getItem("tasty_active_user");
   if (activeUser) {
     if (loginContainer) loginContainer.style.display = "none";
@@ -28,80 +38,113 @@ function checkSession() {
     if (appHeaderTitle) {
       appHeaderTitle.textContent = `${activeUser}'s Meal Planner`;
     }
-    loadUserData(activeUser);
+    await loadUserData(activeUser);
+    setupRealtimeSync(activeUser);
   } else {
     if (loginContainer) loginContainer.style.display = "flex";
     if (appContainer) appContainer.style.display = "none";
     if (appHeaderTitle) {
       appHeaderTitle.textContent = "Meal Planner";
     }
-    // Clear DOM when logged out
     mealsContainer.innerHTML = "";
     shopList.innerHTML = "";
     invList.innerHTML = "";
+    if (realtimeChannel) window.supabaseClient.removeChannel(realtimeChannel);
   }
   renderProfiles();
 }
 
-// Load user-specific data from localStorage
-function loadUserData(username) {
+// Load user-specific data from Supabase
+async function loadUserData(username) {
   mealsContainer.innerHTML = "";
   shopList.innerHTML = "";
   invList.innerHTML = "";
 
   // 1. Load Meals
-  const meals =
-    JSON.parse(localStorage.getItem(`tasty_meals_${username}`)) || [];
-  meals.forEach((mealData) => createMealCardElement(mealData, false));
+  const { data: meals, error: mealsErr } = await window.supabaseClient
+    .from("meals")
+    .select("*")
+    .eq("profile_name", username);
+  if (mealsErr) console.error("Error loading meals:", mealsErr);
+  if (meals) {
+    meals.forEach((meal) => createMealCardElement(meal, false));
+  }
 
   // 2. Load Shop List
-  const shopItems =
-    JSON.parse(localStorage.getItem(`tasty_shop_${username}`)) || [];
-  shopItems.forEach((itemData) => createShopLiElement(itemData, false));
+  const { data: shopItems, error: shopErr } = await window.supabaseClient
+    .from("shopping_list")
+    .select("*")
+    .eq("profile_name", username)
+    .order("text", { ascending: true });
+  if (shopErr) console.error("Error loading shop list:", shopErr);
+  if (shopItems) {
+    shopItems.forEach((item) => createShopLiElement(item, false));
+  }
 
   // 3. Load Inventory
-  const invItems =
-    JSON.parse(localStorage.getItem(`tasty_inv_${username}`)) || [];
-  invItems.forEach((itemData) => createInvLiElement(itemData, false));
+  const { data: invItems, error: invErr } = await window.supabaseClient
+    .from("inventory")
+    .select("*")
+    .eq("profile_name", username)
+    .order("text", { ascending: true });
+  if (invErr) console.error("Error loading inventory:", invErr);
+  if (invItems) {
+    invItems.forEach((item) => createInvLiElement(item, false));
+  }
 }
 
-// Save current DOM state to active user's localStorage
-function saveUserData() {
-  const activeUser = localStorage.getItem("tasty_active_user");
-  if (!activeUser) return;
+// Realtime sync listener for live updates across devices
+function setupRealtimeSync(username) {
+  if (realtimeChannel) window.supabaseClient.removeChannel(realtimeChannel);
 
-  // Save Meals
-  const mealCards = Array.from(mealsContainer.querySelectorAll(".meal-card"));
-  const mealsData = mealCards.map((card) => ({
-    name: card.querySelector("h2").textContent,
-    date: card.querySelector(".date").textContent,
-    description: card.querySelector(".meal-description").textContent,
-    link: card.querySelector("a").href,
-  }));
-  localStorage.setItem(`tasty_meals_${activeUser}`, JSON.stringify(mealsData));
-
-  // Save Shop List
-  const shopLis = Array.from(shopList.querySelectorAll("li"));
-  const shopData = shopLis.map((li) => ({
-    text: li.querySelector("label").textContent.trim(),
-    checked: li.querySelector('input[type="checkbox"]').checked,
-  }));
-  localStorage.setItem(`tasty_shop_${activeUser}`, JSON.stringify(shopData));
-
-  // Save Inventory
-  const invLis = Array.from(invList.querySelectorAll("li"));
-  const invData = invLis.map((li) => ({
-    text: li.querySelector("label").textContent.trim(),
-    checked: li.querySelector('input[type="checkbox"]').checked,
-  }));
-  localStorage.setItem(`tasty_inv_${activeUser}`, JSON.stringify(invData));
+  realtimeChannel = window.supabaseClient
+    .channel(`public-db-changes-${username}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "meals",
+        filter: `profile_name=eq.${username}`,
+      },
+      () => loadUserData(username),
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "shopping_list",
+        filter: `profile_name=eq.${username}`,
+      },
+      () => loadUserData(username),
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "inventory",
+        filter: `profile_name=eq.${username}`,
+      },
+      () => loadUserData(username),
+    )
+    .subscribe();
 }
 
-// Render saved profiles list
-function renderProfiles() {
+// Render saved profiles list from Supabase
+async function renderProfiles() {
   if (!profileList) return;
   profileList.innerHTML = "";
-  const profiles = JSON.parse(localStorage.getItem("tasty_profiles")) || [];
+
+  const { data: profilesData, error: profErr } = await window.supabaseClient
+    .from("profiles")
+    .select("name");
+  if (profErr) {
+    console.error("Error fetching profiles:", profErr);
+    return;
+  }
+  const profiles = profilesData ? profilesData.map((p) => p.name) : [];
 
   profiles.forEach((name) => {
     const li = document.createElement("li");
@@ -129,15 +172,19 @@ function renderProfiles() {
 
 // Handle profile creation/login submission
 if (loginForm) {
-  loginForm.addEventListener("submit", (e) => {
+  loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const name = userNameInput.value.trim();
     if (!name) return;
 
-    let profiles = JSON.parse(localStorage.getItem("tasty_profiles")) || [];
-    if (!profiles.includes(name)) {
-      profiles.push(name);
-      localStorage.setItem("tasty_profiles", JSON.stringify(profiles));
+    const { error } = await window.supabaseClient
+      .from("profiles")
+      .upsert({ name }, { onConflict: "name" });
+
+    if (error) {
+      console.error("Supabase login error:", error);
+      alert(`Login failed: ${error.message}`);
+      return;
     }
 
     localStorage.setItem("tasty_active_user", name);
@@ -155,7 +202,6 @@ if (logoutBtn) {
   });
 }
 
-// Run session check immediately when script loads
 checkSession();
 
 // Helper function to handle the custom <dialog> confirmation modal
@@ -196,10 +242,11 @@ function showConfirmDialog(message) {
   });
 }
 
-// Element Creators (with optional save trigger)
+// Element Creators
 function createMealCardElement(data, shouldSave = true) {
   const mealCard = document.createElement("div");
   mealCard.classList.add("meal-card");
+  mealCard.dataset.id = data.id || "";
 
   const mealTitle = document.createElement("h2");
   mealTitle.textContent = data.name;
@@ -228,7 +275,6 @@ function createMealCardElement(data, shouldSave = true) {
   btnWrapper.append(removeMealBtn);
   mealCard.append(mealTitle, mealDateP, mealDescP, recipeLink, btnWrapper);
 
-  // Chronological Insertion
   const dateValue = data.date === "Pending" ? "" : data.date;
   const isValidDate = dateValue !== "" && !isNaN(Date.parse(dateValue));
   const cardTimestamp = isValidDate ? Date.parse(dateValue) : Infinity;
@@ -256,11 +302,31 @@ function createMealCardElement(data, shouldSave = true) {
     mealsContainer.append(mealCard);
   }
 
-  if (shouldSave) saveUserData();
+  if (shouldSave) {
+    const activeUser = localStorage.getItem("tasty_active_user");
+    window.supabaseClient
+      .from("meals")
+      .insert([
+        {
+          profile_name: activeUser,
+          name: data.name,
+          date: data.date,
+          description: data.description,
+          link: data.link,
+        },
+      ])
+      .select()
+      .then(({ data: insertedData }) => {
+        if (insertedData && insertedData[0]) {
+          mealCard.dataset.id = insertedData[0].id;
+        }
+      });
+  }
 }
 
 function createShopLiElement(data, shouldSave = true) {
   const shopLi = document.createElement("li");
+  shopLi.dataset.id = data.id || "";
   const shopdiv = document.createElement("div");
   const shopCheck = document.createElement("input");
   const shopLabel = document.createElement("label");
@@ -277,7 +343,6 @@ function createShopLiElement(data, shouldSave = true) {
   shopdiv.append(shopLabel);
   shopLi.append(shopdiv, shopRemoveBtn);
 
-  // Alphabetical Insertion
   const existingShopLis = Array.from(shopList.querySelectorAll("li"));
   let shopInserted = false;
 
@@ -299,13 +364,38 @@ function createShopLiElement(data, shouldSave = true) {
     shopList.append(shopLi);
   }
 
-  shopCheck.addEventListener("change", () => saveUserData());
+  shopCheck.addEventListener("change", async () => {
+    if (shopLi.dataset.id) {
+      await window.supabaseClient
+        .from("shopping_list")
+        .update({ checked: shopCheck.checked })
+        .eq("id", shopLi.dataset.id);
+    }
+  });
 
-  if (shouldSave) saveUserData();
+  if (shouldSave) {
+    const activeUser = localStorage.getItem("tasty_active_user");
+    window.supabaseClient
+      .from("shopping_list")
+      .insert([
+        {
+          profile_name: activeUser,
+          text: data.text,
+          checked: data.checked,
+        },
+      ])
+      .select()
+      .then(({ data: insertedData }) => {
+        if (insertedData && insertedData[0]) {
+          shopLi.dataset.id = insertedData[0].id;
+        }
+      });
+  }
 }
 
 function createInvLiElement(data, shouldSave = true) {
   const invLi = document.createElement("li");
+  invLi.dataset.id = data.id || "";
   const invDiv = document.createElement("div");
   const invCheck = document.createElement("input");
   const invLabel = document.createElement("label");
@@ -322,7 +412,6 @@ function createInvLiElement(data, shouldSave = true) {
   invDiv.append(invLabel);
   invLi.append(invDiv, invRemoveBtn);
 
-  // Alphabetical Insertion
   const existingInvLis = Array.from(invList.querySelectorAll("li"));
   let invInserted = false;
 
@@ -344,13 +433,37 @@ function createInvLiElement(data, shouldSave = true) {
     invList.append(invLi);
   }
 
-  invCheck.addEventListener("change", () => saveUserData());
+  invCheck.addEventListener("change", async () => {
+    if (invLi.dataset.id) {
+      await window.supabaseClient
+        .from("inventory")
+        .update({ checked: invCheck.checked })
+        .eq("id", invLi.dataset.id);
+    }
+  });
 
-  if (shouldSave) saveUserData();
+  if (shouldSave) {
+    const activeUser = localStorage.getItem("tasty_active_user");
+    window.supabaseClient
+      .from("inventory")
+      .insert([
+        {
+          profile_name: activeUser,
+          text: data.text,
+          checked: data.checked,
+        },
+      ])
+      .select()
+      .then(({ data: insertedData }) => {
+        if (insertedData && insertedData[0]) {
+          invLi.dataset.id = insertedData[0].id;
+        }
+      });
+  }
 }
 
-// Global click listener on document to capture clicks anywhere (including login screen)
-document.addEventListener("click", (e) => {
+// Global click listener on document
+document.addEventListener("click", async (e) => {
   const button = e.target.closest("button");
   if (!button) return;
   const action = button.dataset.action;
@@ -410,10 +523,16 @@ document.addEventListener("click", (e) => {
           : "this meal";
 
         showConfirmDialog(`Remove this Tasty Meal? (${mealName})`).then(
-          (confirmed) => {
+          async (confirmed) => {
             if (confirmed) {
+              const mealId = mealCardToRemove.dataset.id;
+              if (mealId) {
+                await window.supabaseClient
+                  .from("meals")
+                  .delete()
+                  .eq("id", mealId);
+              }
               mealCardToRemove.remove();
-              saveUserData();
             }
           },
         );
@@ -425,8 +544,14 @@ document.addEventListener("click", (e) => {
       if (targetShopLi) {
         const checkbox = targetShopLi.querySelector('input[type="checkbox"]');
         if (checkbox && checkbox.checked) {
+          const shopId = targetShopLi.dataset.id;
+          if (shopId) {
+            await window.supabaseClient
+              .from("shopping_list")
+              .delete()
+              .eq("id", shopId);
+          }
           targetShopLi.remove();
-          saveUserData();
         } else {
           console.log("item must be checked before it can be removed.");
         }
@@ -438,8 +563,14 @@ document.addEventListener("click", (e) => {
       if (targetInvLi) {
         const checkbox = targetInvLi.querySelector('input[type="checkbox"]');
         if (checkbox && checkbox.checked) {
+          const invId = targetInvLi.dataset.id;
+          if (invId) {
+            await window.supabaseClient
+              .from("inventory")
+              .delete()
+              .eq("id", invId);
+          }
           targetInvLi.remove();
-          saveUserData();
         } else {
           console.log("item must be checked before it can be removed.");
         }
@@ -449,17 +580,24 @@ document.addEventListener("click", (e) => {
     case "removeProfile":
       const profileName = button.dataset.name;
       showConfirmDialog(`Remove profile for ${profileName}?`).then(
-        (confirmed) => {
+        async (confirmed) => {
           if (confirmed) {
-            let profiles =
-              JSON.parse(localStorage.getItem("tasty_profiles")) || [];
-            profiles = profiles.filter((p) => p !== profileName);
-            localStorage.setItem("tasty_profiles", JSON.stringify(profiles));
-
-            // Clean up data for deleted profile
-            localStorage.removeItem(`tasty_meals_${profileName}`);
-            localStorage.removeItem(`tasty_shop_${profileName}`);
-            localStorage.removeItem(`tasty_inv_${profileName}`);
+            await window.supabaseClient
+              .from("profiles")
+              .delete()
+              .eq("name", profileName);
+            await window.supabaseClient
+              .from("meals")
+              .delete()
+              .eq("profile_name", profileName);
+            await window.supabaseClient
+              .from("shopping_list")
+              .delete()
+              .eq("profile_name", profileName);
+            await window.supabaseClient
+              .from("inventory")
+              .delete()
+              .eq("profile_name", profileName);
 
             if (localStorage.getItem("tasty_active_user") === profileName) {
               localStorage.removeItem("tasty_active_user");
