@@ -1,0 +1,267 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+}
+p,
+h1,
+h2,
+a,
+li,
+label,
+button {
+  color: rgb(255, 215, 169);
+  text-shadow: 2px 2px 1px rgb(58, 49, 14);
+}
+a {
+  text-decoration: none;
+  color: rgb(97, 237, 255);
+}
+ul {
+  list-style: none;
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  border: 1px solid black;
+  font-size: 1.2rem;
+  background: linear-gradient(
+    135deg,
+    rgb(116, 87, 16),
+    rgb(212, 190, 134),
+    goldenrod
+  );
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+}
+nav ul {
+  display: flex;
+  gap: 1.2rem;
+}
+
+header {
+  margin-top: 3.2rem;
+  background: linear-gradient(135deg, darkblue, lightblue, darkblue);
+  text-align: center;
+  font-size: 2rem;
+  text-shadow: 4px 4px 8px black;
+  padding: 2rem;
+  border: 1px solid black;
+}
+header h1 {
+  display: inline-block;
+  padding: 1rem;
+  background: linear-gradient(
+    135deg,
+    rgb(116, 87, 16),
+    rgb(212, 190, 134),
+    goldenrod
+  );
+  border: 1px solid black;
+  border-radius: 2rem;
+  box-shadow: 8px 8px 16px black;
+}
+
+main {
+  padding: 2rem;
+  background: linear-gradient(
+    135deg,
+    rgb(116, 87, 16),
+    rgb(212, 190, 134),
+    goldenrod
+  );
+}
+
+form {
+  padding: 1rem;
+  border: 1px solid black;
+  border-radius: 2rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, darkblue, lightblue, darkblue);
+  box-shadow: 8px 8px 16px black;
+}
+form label {
+  width: 12vw;
+  font-size: 1rem;
+  flex-grow: 0;
+  flex-shrink: 0;
+}
+form input {
+  width: 100%;
+  font-size: 1.5rem;
+  margin: 1rem 0;
+  padding-left: 1rem;
+  box-shadow: 4px 4px 8px black inset;
+  outline: none;
+  border: none;
+}
+.formrow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+form input:focus {
+  box-shadow: 4px 4px 8px black inset;
+  outline: none;
+  border: none;
+}
+#mealBtn {
+  margin-top: 1rem;
+  width: 10rem;
+  align-self: center;
+  padding: 0.5rem;
+  font: inherit;
+  font-size: 1.2rem;
+  border-radius: 2rem;
+  box-shadow: 4px 4px 4px black;
+  border: none;
+  background: linear-gradient(
+    135deg,
+    rgb(116, 87, 16),
+    rgb(212, 190, 134),
+    goldenrod
+  );
+  margin-bottom: 1rem;
+}
+
+.meals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+  border: 1px solid black;
+  border-radius: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, darkblue, lightblue, darkblue);
+  box-shadow: 8px 8px 16px black;
+}
+.meal-card {
+  padding: 1rem;
+  background: linear-gradient(
+    135deg,
+    rgb(48, 48, 141),
+    rgb(96, 182, 211),
+    rgb(48, 48, 141)
+  );
+  border: 1px solid black;
+  border-radius: 2rem;
+  box-shadow: 8px 8px 16px black;
+}
+.meal-card h2 {
+  text-align: center;
+}
+.date {
+  text-align: right;
+  margin-bottom: 1rem;
+}
+.meal-description {
+  margin-bottom: 1rem;
+}
+
+.shop-list {
+  border: 1px solid black;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  border-radius: 2rem;
+  background: linear-gradient(135deg, darkblue, lightblue, darkblue);
+  box-shadow: 8px 8px 16px black;
+}
+
+#shopListInput {
+  width: 100%;
+  font-size: 1.5rem;
+  margin: 1rem 0;
+  padding-left: 1rem;
+  box-shadow: 4px 4px 8px black inset;
+  outline: none;
+  border: none;
+}
+#shopListInput:focus {
+  box-shadow: 4px 4px 8px black inset;
+  outline: none;
+  border: none;
+}
+#shopAddBtn {
+  padding: 0.5rem;
+  font: inherit;
+  font-size: 1.2rem;
+  border-radius: 2rem;
+  box-shadow: 4px 4px 4px black;
+  border: none;
+  background: linear-gradient(
+    135deg,
+    rgb(116, 87, 16),
+    rgb(212, 190, 134),
+    goldenrod
+  );
+  margin-bottom: 1rem;
+}
+.shopListEntries {
+  font-size: 1.2rem;
+}
+.removeBtn {
+  padding: 0.2rem;
+  font: inherit;
+  font-size: 0.8rem;
+  border-radius: 2rem;
+  border: none;
+  background: red;
+  box-shadow: 3px 3px 2px black;
+}
+.shopListEntries li {
+  display: flex;
+  justify-content: space-between;
+}
+
+.inventory {
+  border: 1px solid black;
+  padding: 1rem;
+  border-radius: 2rem;
+  background: linear-gradient(135deg, darkblue, lightblue, darkblue);
+  box-shadow: 8px 8px 16px black;
+}
+
+#inventoryInput {
+  width: 100%;
+  font-size: 1.5rem;
+  margin: 1rem 0;
+  padding-left: 1rem;
+  box-shadow: 4px 4px 8px black inset;
+  outline: none;
+  border: none;
+}
+#inventoryInput:focus {
+  box-shadow: 4px 4px 8px black inset;
+  outline: none;
+  border: none;
+}
+#inventoryAddBtn {
+  padding: 0.5rem;
+  font: inherit;
+  font-size: 1.2rem;
+  border-radius: 2rem;
+  box-shadow: 4px 4px 4px black;
+  border: none;
+  background: linear-gradient(
+    135deg,
+    rgb(116, 87, 16),
+    rgb(212, 190, 134),
+    goldenrod
+  );
+  margin-bottom: 1rem;
+}
+.inventoryEntries {
+  font-size: 1.2rem;
+}
+.inventoryEntries li {
+  display: flex;
+  justify-content: space-between;
+}

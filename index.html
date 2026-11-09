@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meal Planner</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="main.js" defer></script>
+  </head>
+  <body>
+    <nav>
+      <a href="#home">Home</a>
+      <ul>
+        <li><a href="#meals">Meals</a></li>
+        <li><a href="#shop-list">Shopping List</a></li>
+        <li><a href="#inventory">Inventory</a></li>
+      </ul>
+    </nav>
+    <header>
+      <h1>Food?</h1>
+    </header>
+    <main>
+      <form><h2>Enter a New Meal</h2>
+        <div class="formrow">
+        <label for="mealName">Meal Name:</label>
+        <input id="mealName" type="text" placeholder="What's for Dinner?" required></div>
+        <div class="formrow">
+        <label for="mealDate">Date:</label>
+        <input id="mealDate" type="date" placeholder="" required></div>
+        <div class="formrow">
+        <label for="mealDesc">What's it like?</label>
+        <input id="mealDesc" type="text" placeholder="Is it...tasty?" required></div>
+        <div class="formrow">
+        <label for="mealLink">Link to recipe:</label>
+        <input id="mealLink" type="url" ></div>
+        <button id="mealBtn" type="submit">Add to Meals</button>
+      </form>
+      <section class="meals" id="meals">
+        <div class="meal-card">
+          <h2>Meal</h2>
+          <p class="date">Day or Date</p>
+          <p class="meal-description">A brief description of the meal.</p>
+          <a href="https://google.com">Link to Recipe</a>
+          <a href="https://michansohanson-prog.github.io/odin-recipes/" target="_blank">Recipe Website</a>
+        </div>
+      </section>
+      <section class="shop-list" id="shop-list">
+        <h2>Shopping List</h2>
+        <input
+          id="shopListInput"
+          type="text"
+          placeholder="Looking to protect yourself, or deal some damage?"
+        />
+        <button type="submit" id="shopAddBtn">Add to List</button>
+        <ul class="shopListEntries">
+          <li>
+            <div>
+              <input id="listItemCheckbox" type="checkbox" />
+              <label for="listItemCheckbox">Example item</label>
+            </div>
+            <button class="removeBtn">Remove item</button>
+          </li>
+        </ul>
+      </section>
+      <section class="inventory" id="inventory">
+        <h2>Inventory</h2>
+        <input
+          id="inventoryInput"
+          type="text"
+          placeholder="Whatcha got already?"
+        />
+        <button type="submit" id="inventoryAddBtn">Add to Inventory</button>
+        <ul class="inventoryEntries">
+          <li>
+            <div>
+              <input id="inventoryCheckbox" type="checkbox"/>
+              <label for="inventoryCheckbox">Example Inventory item</label>
+              </div>
+              <button class="removeBtn">Remove item</button>
+            </div>
+          </li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>
