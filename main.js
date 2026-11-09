@@ -25,6 +25,7 @@ const loginForm = document.querySelector("#loginForm");
 const userNameInput = document.querySelector("#userNameInput");
 const profileList = document.querySelector("#profileList");
 const logoutBtn = document.querySelector("#logoutBtn");
+const homeLink = document.querySelector("#homeLink");
 const appHeaderTitle = document.querySelector("#appHeaderTitle");
 
 let realtimeChannel = null;
@@ -199,6 +200,14 @@ if (logoutBtn) {
     e.preventDefault();
     localStorage.removeItem("tasty_active_user");
     checkSession();
+  });
+}
+
+// Handle Home link click to scroll smoothly to top
+if (homeLink) {
+  homeLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   });
 }
 
