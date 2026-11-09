@@ -266,7 +266,7 @@ form input:focus {
 
 #shopListInput {
   width: 100%;
-  font-size: 1.2rem;
+  font-size: 0.8rem;
   margin: 1rem 0;
   padding-left: 1rem;
   box-shadow: 4px 4px 8px black inset;
@@ -321,7 +321,7 @@ form input:focus {
 
 #inventoryInput {
   width: 100%;
-  font-size: 1.2rem;
+  font-size: 0.8rem;
   margin: 1rem 0;
   padding-left: 1rem;
   box-shadow: 4px 4px 8px black inset;
