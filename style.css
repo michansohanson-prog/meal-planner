@@ -21,6 +21,9 @@ a {
 ul {
   list-style: none;
 }
+label:has(input[type="checkbox"]:checked) {
+  text-decoration: line-through;
+}
 
 nav {
   display: flex;
@@ -39,11 +42,17 @@ nav {
   right: 0;
   left: 0;
 }
+.homeRecipes {
+  display: flex;
+  gap: 1.2rem;
+}
 nav ul {
   display: flex;
   gap: 1.2rem;
 }
-
+label input[type="checkbox"] {
+  margin-right: 8px;
+}
 header {
   margin-top: 3.2rem;
   background: linear-gradient(135deg, darkblue, lightblue, darkblue);
@@ -95,7 +104,7 @@ form label {
 }
 form input {
   width: 100%;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   margin: 1rem 0;
   padding-left: 1rem;
   box-shadow: 4px 4px 8px black inset;
@@ -131,20 +140,25 @@ form input:focus {
   margin-bottom: 1rem;
 }
 
+.mealsContainer {
+  margin-bottom: 2rem;
+  border: 1px solid black;
+  border-radius: 2rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, darkblue, lightblue, darkblue);
+  box-shadow: 8px 8px 16px black;
+}
+.mealsContainer h2 {
+  margin-bottom: 1rem;
+}
 .meals {
   display: flex;
   flex-wrap: wrap;
   gap: 2rem;
-  margin-bottom: 2rem;
   justify-content: center;
-  border: 1px solid black;
-  border-radius: 2rem;
-  padding: 2rem;
-  background: linear-gradient(135deg, darkblue, lightblue, darkblue);
-  box-shadow: 8px 8px 16px black;
 }
 .meal-card {
-  padding: 1rem;
+  padding: 1.2rem;
   background: linear-gradient(
     135deg,
     rgb(48, 48, 141),
@@ -154,9 +168,17 @@ form input:focus {
   border: 1px solid black;
   border-radius: 2rem;
   box-shadow: 8px 8px 16px black;
+
+  /* Responsive sizing for mobile and desktop */
+  flex: 1 1 280px;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .meal-card h2 {
   text-align: center;
+  /* Ensures long titles wrap properly */
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .date {
   text-align: right;
@@ -164,6 +186,9 @@ form input:focus {
 }
 .meal-description {
   margin-bottom: 1rem;
+  /* Ensures long descriptions wrap properly */
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .meal-card button {
   margin-top: 1rem;
@@ -180,7 +205,7 @@ form input:focus {
 
 #shopListInput {
   width: 100%;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   margin: 1rem 0;
   padding-left: 1rem;
   box-shadow: 4px 4px 8px black inset;
@@ -222,6 +247,7 @@ form input:focus {
 .shopListEntries li {
   display: flex;
   justify-content: space-between;
+  margin-bottom: 0.5rem;
 }
 
 .inventory {
@@ -234,7 +260,7 @@ form input:focus {
 
 #inventoryInput {
   width: 100%;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   margin: 1rem 0;
   padding-left: 1rem;
   box-shadow: 4px 4px 8px black inset;
@@ -267,4 +293,84 @@ form input:focus {
 .inventoryEntries li {
   display: flex;
   justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+/* Center and style the native dialog modal */
+#confirmModal {
+  border: none;
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 8px 8px 8px black;
+  background: linear-gradient(
+    135deg,
+    rgb(116, 87, 16),
+    rgb(212, 190, 134),
+    goldenrod
+  );
+  text-align: center;
+  margin: auto; /* Ensures perfect centering */
+}
+
+/* Dim and blur the background when the modal pops up */
+#confirmModal::backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
+}
+
+#confirmModal h3 {
+  margin-top: 0;
+  color: #2c3e50;
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+}
+
+#confirmModal p {
+  color: #7c2d2d;
+  font-size: 1rem;
+  margin-bottom: 20px;
+  text-shadow: none;
+  word-break: break-word;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.modal-buttons button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-shadow: none;
+  transition: opacity 0.2s ease;
+}
+
+.modal-buttons button:hover {
+  opacity: 0.85;
+}
+
+#confirmYes {
+  background-color: #e53935; /* Vibrant pop color for the delete action */
+  color: white;
+}
+
+#confirmNo {
+  background-color: #e0e0e0;
+  color: #333;
+}
+@media (max-width: 768px) {
+  .formrow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  form label {
+    width: 100%;
+  }
 }
