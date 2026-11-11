@@ -1,6 +1,7 @@
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 4.5rem; /* Desktop anchor offset */
+  -webkit-tap-highlight-color: transparent;
 }
 
 * {
@@ -8,6 +9,7 @@ html {
   margin: 0;
   padding: 0;
   line-height: 1.5;
+  touch-action: manipulation;
 }
 p,
 h1,
@@ -68,6 +70,7 @@ nav ul {
 }
 label input[type="checkbox"] {
   margin-right: 8px;
+  transform: scale(1.1);
 }
 
 /* Header Container */
@@ -222,6 +225,32 @@ form input:focus {
   gap: 2rem;
   justify-content: center;
 }
+
+/* Smooth transitions for mobile layout stability */
+.meal-card,
+.shopListEntries li,
+.inventoryEntries li {
+  transition:
+    opacity 0.3s ease-in-out,
+    transform 0.3s ease-in-out,
+    max-height 0.3s ease-in-out,
+    margin 0.3s ease-in-out,
+    padding 0.3s ease-in-out;
+  max-height: 500px;
+  overflow: hidden;
+}
+
+.fade-out {
+  opacity: 0;
+  transform: scale(0.95);
+  max-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  border: none !important;
+}
+
 .meal-card {
   padding: 1.2rem;
   background: linear-gradient(

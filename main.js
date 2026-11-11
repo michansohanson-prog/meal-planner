@@ -94,7 +94,7 @@ async function loadUserData(username) {
   }
 }
 
-// Realtime sync listener for live updates across devices (filters removed to catch DELETE events reliably)
+// Realtime sync listener with surgical element patching and smooth animations
 function setupRealtimeSync(username) {
   if (realtimeChannel) window.supabaseClient.removeChannel(realtimeChannel);
 
@@ -103,29 +103,134 @@ function setupRealtimeSync(username) {
     .on(
       "postgres_changes",
       {
-        event: "*",
+        event: "INSERT",
+        schema: "public",
+        table: "meals",
+        filter: `profile_name=eq.${username}`,
+      },
+      (payload) => {
+        if (
+          !document.querySelector(`.meal-card[data-id="${payload.new.id}"]`)
+        ) {
+          createMealCardElement(payload.new, false);
+        }
+      },
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "DELETE",
         schema: "public",
         table: "meals",
       },
-      () => loadUserData(username),
+      (payload) => {
+        const card = document.querySelector(
+          `.meal-card[data-id="${payload.old.id}"]`,
+        );
+        if (card) smoothRemove(card);
+      },
     )
     .on(
       "postgres_changes",
       {
-        event: "*",
+        event: "INSERT",
+        schema: "public",
+        table: "shopping_list",
+        filter: `profile_name=eq.${username}`,
+      },
+      (payload) => {
+        if (
+          !document.querySelector(
+            `.shopListEntries li[data-id="${payload.new.id}"]`,
+          )
+        ) {
+          createShopLiElement(payload.new, false);
+        }
+      },
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
         schema: "public",
         table: "shopping_list",
       },
-      () => loadUserData(username),
+      (payload) => {
+        const li = document.querySelector(
+          `.shopListEntries li[data-id="${payload.new.id}"]`,
+        );
+        if (li) {
+          const checkbox = li.querySelector('input[type="checkbox"]');
+          if (checkbox && checkbox.checked !== payload.new.checked) {
+            checkbox.checked = payload.new.checked;
+          }
+        }
+      },
     )
     .on(
       "postgres_changes",
       {
-        event: "*",
+        event: "DELETE",
+        schema: "public",
+        table: "shopping_list",
+      },
+      (payload) => {
+        const li = document.querySelector(
+          `.shopListEntries li[data-id="${payload.old.id}"]`,
+        );
+        if (li) smoothRemove(li);
+      },
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "inventory",
+        filter: `profile_name=eq.${username}`,
+      },
+      (payload) => {
+        if (
+          !document.querySelector(
+            `.inventoryEntries li[data-id="${payload.new.id}"]`,
+          )
+        ) {
+          createInvLiElement(payload.new, false);
+        }
+      },
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
         schema: "public",
         table: "inventory",
       },
-      () => loadUserData(username),
+      (payload) => {
+        const li = document.querySelector(
+          `.inventoryEntries li[data-id="${payload.new.id}"]`,
+        );
+        if (li) {
+          const checkbox = li.querySelector('input[type="checkbox"]');
+          if (checkbox && checkbox.checked !== payload.new.checked) {
+            checkbox.checked = payload.new.checked;
+          }
+        }
+      },
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "DELETE",
+        schema: "public",
+        table: "inventory",
+      },
+      (payload) => {
+        const li = document.querySelector(
+          `.inventoryEntries li[data-id="${payload.old.id}"]`,
+        );
+        if (li) smoothRemove(li);
+      },
     )
     .subscribe();
 }
@@ -191,6 +296,11 @@ if (loginForm) {
   });
 }
 
+// Handle sub-forms to prevent keyboard enter key reloads
+document.querySelectorAll("form").forEach((form) => {
+  form.addEventListener("submit", (e) => e.preventDefault());
+});
+
 // Handle logout / switch user
 if (logoutBtn) {
   logoutBtn.addEventListener("click", (e) => {
@@ -248,11 +358,24 @@ function showConfirmDialog(message) {
   });
 }
 
-// Element Creators
+// Helper to smoothly animate element removal
+function smoothRemove(element) {
+  if (!element) return;
+  element.classList.add("fade-out");
+  setTimeout(() => {
+    element.remove();
+  }, 300);
+}
+
+// Element Creators with smooth mobile fade-in
 function createMealCardElement(data, shouldSave = true) {
   const mealCard = document.createElement("div");
   mealCard.classList.add("meal-card");
   mealCard.dataset.id = data.id || "";
+
+  if (!shouldSave) {
+    mealCard.style.opacity = "0";
+  }
 
   const mealTitle = document.createElement("h2");
   mealTitle.textContent = data.name;
@@ -275,6 +398,7 @@ function createMealCardElement(data, shouldSave = true) {
   const btnWrapper = document.createElement("div");
   const removeMealBtn = document.createElement("button");
   removeMealBtn.classList.add("removeBtn");
+  removeMealBtn.type = "button";
   removeMealBtn.dataset.action = "removeMealBtn";
   removeMealBtn.textContent = "Remove Meal";
 
@@ -308,6 +432,12 @@ function createMealCardElement(data, shouldSave = true) {
     mealsContainer.append(mealCard);
   }
 
+  if (!shouldSave) {
+    requestAnimationFrame(() => {
+      mealCard.style.opacity = "1";
+    });
+  }
+
   if (shouldSave) {
     const activeUser = localStorage.getItem("tasty_active_user");
     window.supabaseClient
@@ -333,6 +463,10 @@ function createMealCardElement(data, shouldSave = true) {
 function createShopLiElement(data, shouldSave = true) {
   const shopLi = document.createElement("li");
   shopLi.dataset.id = data.id || "";
+  if (!shouldSave) {
+    shopLi.style.opacity = "0";
+  }
+
   const shopdiv = document.createElement("div");
   const shopCheck = document.createElement("input");
   const shopLabel = document.createElement("label");
@@ -342,6 +476,7 @@ function createShopLiElement(data, shouldSave = true) {
   shopCheck.checked = data.checked || false;
   shopLabel.textContent = data.text;
   shopRemoveBtn.classList = "removeBtn";
+  shopRemoveBtn.type = "button";
   shopRemoveBtn.dataset.action = "removeShopBtn";
   shopRemoveBtn.textContent = "Remove item";
 
@@ -368,6 +503,12 @@ function createShopLiElement(data, shouldSave = true) {
 
   if (!shopInserted) {
     shopList.append(shopLi);
+  }
+
+  if (!shouldSave) {
+    requestAnimationFrame(() => {
+      shopLi.style.opacity = "1";
+    });
   }
 
   shopCheck.addEventListener("change", async () => {
@@ -402,6 +543,10 @@ function createShopLiElement(data, shouldSave = true) {
 function createInvLiElement(data, shouldSave = true) {
   const invLi = document.createElement("li");
   invLi.dataset.id = data.id || "";
+  if (!shouldSave) {
+    invLi.style.opacity = "0";
+  }
+
   const invDiv = document.createElement("div");
   const invCheck = document.createElement("input");
   const invLabel = document.createElement("label");
@@ -411,6 +556,7 @@ function createInvLiElement(data, shouldSave = true) {
   invCheck.checked = data.checked || false;
   invLabel.textContent = data.text;
   invRemoveBtn.classList = "removeBtn";
+  invRemoveBtn.type = "button";
   invRemoveBtn.dataset.action = "removeInventoryBtn";
   invRemoveBtn.textContent = "Remove item";
 
@@ -437,6 +583,12 @@ function createInvLiElement(data, shouldSave = true) {
 
   if (!invInserted) {
     invList.append(invLi);
+  }
+
+  if (!shouldSave) {
+    requestAnimationFrame(() => {
+      invLi.style.opacity = "1";
+    });
   }
 
   invCheck.addEventListener("change", async () => {
@@ -521,6 +673,7 @@ document.addEventListener("click", async (e) => {
       break;
 
     case "removeMealBtn":
+      e.preventDefault();
       const mealCardToRemove = button.closest(".meal-card");
       if (mealCardToRemove) {
         const mealTitleElement = mealCardToRemove.querySelector("h2");
@@ -538,7 +691,7 @@ document.addEventListener("click", async (e) => {
                   .delete()
                   .eq("id", mealId);
               }
-              mealCardToRemove.remove();
+              smoothRemove(mealCardToRemove);
             }
           },
         );
@@ -546,6 +699,7 @@ document.addEventListener("click", async (e) => {
       break;
 
     case "removeShopBtn":
+      e.preventDefault();
       const targetShopLi = button.closest("li");
       if (targetShopLi) {
         const checkbox = targetShopLi.querySelector('input[type="checkbox"]');
@@ -557,7 +711,7 @@ document.addEventListener("click", async (e) => {
               .delete()
               .eq("id", shopId);
           }
-          targetShopLi.remove();
+          smoothRemove(targetShopLi);
         } else {
           console.log("item must be checked before it can be removed.");
         }
@@ -565,6 +719,7 @@ document.addEventListener("click", async (e) => {
       break;
 
     case "removeInventoryBtn":
+      e.preventDefault();
       const targetInvLi = button.closest("li");
       if (targetInvLi) {
         const checkbox = targetInvLi.querySelector('input[type="checkbox"]');
@@ -576,7 +731,7 @@ document.addEventListener("click", async (e) => {
               .delete()
               .eq("id", invId);
           }
-          targetInvLi.remove();
+          smoothRemove(targetInvLi);
         } else {
           console.log("item must be checked before it can be removed.");
         }
@@ -584,6 +739,7 @@ document.addEventListener("click", async (e) => {
       break;
 
     case "removeProfile":
+      e.preventDefault();
       const profileName = button.dataset.name;
       showConfirmDialog(`Remove profile for ${profileName}?`).then(
         async (confirmed) => {

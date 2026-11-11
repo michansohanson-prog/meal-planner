@@ -4,10 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Meal Planner</title>
-    <link rel="stylesheet" href="style.css?v=1.14" />
+    <link rel="stylesheet" href="style.css?v=1.16" />
     <!-- Supabase Library CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="main.js?v=1.14" defer></script>
+    <script src="main.js?v=1.16" defer></script>
   </head>
   <body>
     <!-- Login Screen View -->
@@ -52,7 +52,7 @@
         <h2 id="appHeaderTitle">Meal Planner</h2>
       </header>
       <main>
-        <form>
+        <form id="mealForm">
           <h2>Enter a New Meal</h2>
           <div class="formrow">
             <label for="mealName">Meal Name:</label>
@@ -75,36 +75,47 @@
             <label for="mealLink">Link to recipe:</label>
             <input id="mealLink" type="url" />
           </div>
-          <button id="mealBtn" data-action="mealBtn" type="submit">
+          <button id="mealBtn" data-action="mealBtn" type="button">
             Add to Meals
           </button>
         </form>
+
         <div class="mealsContainer">
           <h2>Meals</h2>
           <section class="meals" id="meals"></section>
         </div>
+
         <section class="shop-list" id="shop-list">
           <h2>Shopping List</h2>
-          <input
-            id="shopListInput"
-            type="text"
-            placeholder="Looking to protect yourself, or deal some damage?"
-          />
-          <button type="submit" id="shopAddBtn" data-action="shopBtn">
-            Add to List
-          </button>
+          <form id="shopForm">
+            <input
+              id="shopListInput"
+              type="text"
+              placeholder="Looking to protect yourself, or deal some damage?"
+            />
+            <button type="button" id="shopAddBtn" data-action="shopBtn">
+              Add to List
+            </button>
+          </form>
           <ul class="shopListEntries"></ul>
         </section>
+
         <section class="inventory" id="inventory">
           <h2>Inventory</h2>
-          <input
-            id="inventoryInput"
-            type="text"
-            placeholder="Whatcha got already?"
-          />
-          <button type="submit" id="inventoryAddBtn" data-action="inventoryBtn">
-            Add to Inventory
-          </button>
+          <form id="inventoryForm">
+            <input
+              id="inventoryInput"
+              type="text"
+              placeholder="Whatcha got already?"
+            />
+            <button
+              type="button"
+              id="inventoryAddBtn"
+              data-action="inventoryBtn"
+            >
+              Add to Inventory
+            </button>
+          </form>
           <ul class="inventoryEntries"></ul>
         </section>
       </main>
@@ -114,8 +125,8 @@
     <h3>Tasty Planner</h3>
     <p>Remove this Tasty Meal?</p>
     <div class="modal-buttons">
-      <button id="confirmYes" class="removeBtn">Yes</button>
-      <button id="confirmNo" class="removeBtn">No</button>
+      <button id="confirmYes" class="removeBtn" type="button">Yes</button>
+      <button id="confirmNo" class="removeBtn" type="button">No</button>
     </div>
   </dialog>
 </html>
