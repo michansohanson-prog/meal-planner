@@ -226,10 +226,8 @@ form input:focus {
   justify-content: center;
 }
 
-/* Smooth transitions for mobile layout stability */
-.meal-card,
-.shopListEntries li,
-.inventoryEntries li {
+/* Smooth transitions for meal cards */
+.meal-card {
   transition:
     opacity 0.3s ease-in-out,
     transform 0.3s ease-in-out,
@@ -238,20 +236,6 @@ form input:focus {
     padding 0.3s ease-in-out;
   max-height: 500px;
   overflow: hidden;
-}
-
-.fade-out {
-  opacity: 0;
-  transform: scale(0.95);
-  max-height: 0 !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-  border: none !important;
-}
-
-.meal-card {
   padding: 1.2rem;
   background: linear-gradient(
     135deg,
@@ -266,6 +250,33 @@ form input:focus {
   max-width: 100%;
   box-sizing: border-box;
 }
+
+/* Smooth transitions for shopping and inventory list items without clipping shadows */
+.shopListEntries li,
+.inventoryEntries li {
+  transition:
+    opacity 0.3s ease-in-out,
+    transform 0.3s ease-in-out,
+    margin 0.3s ease-in-out,
+    padding 0.3s ease-in-out;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding: 3px 0; /* Gives breathing room for button box-shadows */
+}
+
+.fade-out {
+  opacity: 0;
+  transform: scale(0.95);
+  max-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  border: none !important;
+}
+
 .meal-card h2 {
   text-align: center;
   overflow-wrap: break-word;
@@ -335,11 +346,6 @@ form input:focus {
   background: red;
   box-shadow: 3px 3px 2px black;
 }
-.shopListEntries li {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
 
 .inventory {
   border: 1px solid black;
@@ -381,11 +387,6 @@ form input:focus {
 }
 .inventoryEntries {
   font-size: 1.2rem;
-}
-.inventoryEntries li {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
 }
 
 #confirmModal {
