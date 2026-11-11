@@ -321,6 +321,7 @@ form input:focus {
     goldenrod
   );
   margin-bottom: 1rem;
+  width: 8rem;
 }
 .shopListEntries {
   font-size: 1.2rem;
@@ -376,6 +377,7 @@ form input:focus {
     goldenrod
   );
   margin-bottom: 1rem;
+  width: 10rem;
 }
 .inventoryEntries {
   font-size: 1.2rem;
