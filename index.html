@@ -4,10 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Meal Planner</title>
-    <link rel="stylesheet" href="style.css?v=1.18" />
+    <link rel="stylesheet" href="style.css?v=1.19" />
     <!-- Supabase Library CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="main.js?v=1.17" defer></script>
+    <script src="main.js?v=1.18" defer></script>
   </head>
   <body>
     <!-- Login Screen View -->
@@ -103,11 +103,85 @@
         <section class="inventory" id="inventory">
           <h2>Inventory</h2>
           <form id="inventoryForm">
-            <input
-              id="inventoryInput"
-              type="text"
-              placeholder="Whatcha got already?"
-            />
+            <div class="formrow">
+              <input
+                id="inventoryInput"
+                type="text"
+                placeholder="Whatcha got already?"
+                required
+              />
+            </div>
+
+            <!-- Main Location Selection -->
+            <div class="inventory-location-group">
+              <p class="group-label">Location (Select One):</p>
+              <div class="checkbox-row">
+                <label>
+                  <input
+                    type="radio"
+                    name="mainLocation"
+                    value="Kitchen"
+                    required
+                  />
+                  Kitchen
+                </label>
+                <label>
+                  <input type="radio" name="mainLocation" value="Downstairs" />
+                  Downstairs
+                </label>
+              </div>
+            </div>
+
+            <!-- Sub-location Selection: Kitchen -->
+            <div
+              id="kitchenSubGroup"
+              class="inventory-subgroup"
+              style="display: none"
+            >
+              <p class="group-label">Kitchen Storage (Select One):</p>
+              <div class="checkbox-row">
+                <label>
+                  <input type="radio" name="kitchenSub" value="Dry" />
+                  Dry
+                </label>
+                <label>
+                  <input type="radio" name="kitchenSub" value="Fridge" />
+                  Fridge
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="kitchenSub"
+                    value="Freezer (main)"
+                  />
+                  Freezer (main)
+                </label>
+              </div>
+            </div>
+
+            <!-- Sub-location Selection: Downstairs -->
+            <div
+              id="downstairsSubGroup"
+              class="inventory-subgroup"
+              style="display: none"
+            >
+              <p class="group-label">Downstairs Storage (Select One):</p>
+              <div class="checkbox-row">
+                <label>
+                  <input type="radio" name="downstairsSub" value="Pantry" />
+                  Pantry
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="downstairsSub"
+                    value="Freezer (downstairs)"
+                  />
+                  Freezer (downstairs)
+                </label>
+              </div>
+            </div>
+
             <button
               type="button"
               id="inventoryAddBtn"
@@ -116,7 +190,37 @@
               Add to Inventory
             </button>
           </form>
-          <ul class="inventoryEntries"></ul>
+
+          <!-- Categorized Inventory List Section -->
+          <div id="inventoryContainer" class="inventoryEntries">
+            <div class="inv-main-section" data-location="Kitchen">
+              <h3>Kitchen</h3>
+              <div class="inv-sub-section" data-sub="Dry">
+                <h4>Dry</h4>
+                <ul></ul>
+              </div>
+              <div class="inv-sub-section" data-sub="Fridge">
+                <h4>Fridge</h4>
+                <ul></ul>
+              </div>
+              <div class="inv-sub-section" data-sub="Freezer (main)">
+                <h4>Freezer (main)</h4>
+                <ul></ul>
+              </div>
+            </div>
+
+            <div class="inv-main-section" data-location="Downstairs">
+              <h3>Downstairs</h3>
+              <div class="inv-sub-section" data-sub="Pantry">
+                <h4>Pantry</h4>
+                <ul></ul>
+              </div>
+              <div class="inv-sub-section" data-sub="Freezer (downstairs)">
+                <h4>Freezer (downstairs)</h4>
+                <ul></ul>
+              </div>
+            </div>
+          </div>
         </section>
       </main>
     </div>

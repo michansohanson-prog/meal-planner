@@ -14,6 +14,8 @@ html {
 p,
 h1,
 h2,
+h3,
+h4,
 a,
 li,
 label,
@@ -68,9 +70,14 @@ nav ul {
   display: flex;
   gap: 1.2rem;
 }
-label input[type="checkbox"] {
+
+/* High Contrast & Sizing for Radios and Checkboxes */
+label input[type="checkbox"],
+label input[type="radio"] {
   margin-right: 8px;
-  transform: scale(1.1);
+  transform: scale(1.3);
+  accent-color: rgb(255, 215, 169);
+  cursor: pointer;
 }
 
 /* Header Container */
@@ -165,7 +172,7 @@ form {
   box-shadow: 8px 8px 16px black;
 }
 form label {
-  width: 12vw;
+  width: auto;
   font-size: 1rem;
   flex-grow: 0;
   flex-shrink: 0;
@@ -263,7 +270,7 @@ form input:focus {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
-  padding: 3px 0; /* Gives breathing room for button box-shadows */
+  padding: 3px 0;
 }
 
 .fade-out {
@@ -338,13 +345,14 @@ form input:focus {
   font-size: 1.2rem;
 }
 .removeBtn {
-  padding: 0.2rem;
+  padding: 0.2rem 0.6rem;
   font: inherit;
   font-size: 0.8rem;
   border-radius: 2rem;
   border: none;
   background: red;
   box-shadow: 3px 3px 2px black;
+  cursor: pointer;
 }
 
 .inventory {
@@ -384,9 +392,83 @@ form input:focus {
   );
   margin-bottom: 1rem;
   width: 10rem;
+  align-self: flex-start;
 }
 .inventoryEntries {
   font-size: 1.2rem;
+}
+
+/* Inventory Form Layout & Categorized List Styling */
+.inventory-location-group,
+.inventory-subgroup {
+  margin: 0.8rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.group-label {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.checkbox-row {
+  display: flex;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.checkbox-row label {
+  width: auto;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  padding: 0.2rem 0.6rem;
+  border-radius: 1rem;
+  border: 1px solid transparent;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+/* High-contrast active/checked state for option labels */
+.checkbox-row label:has(input[type="checkbox"]:checked),
+.checkbox-row label:has(input[type="radio"]:checked) {
+  background: rgba(255, 215, 169, 0.25);
+  border-color: rgb(255, 215, 169);
+  font-weight: bold;
+}
+
+.inv-main-section {
+  margin-top: 1rem;
+  padding: 0.8rem;
+  background: rgba(0, 0, 30, 0.25);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.inv-main-section h3 {
+  font-size: 1.4rem;
+  border-bottom: 1px solid goldenrod;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.2rem;
+}
+
+.inv-sub-section {
+  margin-left: 1rem;
+  margin-top: 0.6rem;
+}
+
+.inv-sub-section h4 {
+  font-size: 1.1rem;
+  color: rgb(97, 237, 255);
+  margin-bottom: 0.3rem;
+}
+
+.inv-sub-section ul {
+  padding-left: 0.5rem;
 }
 
 #confirmModal {
@@ -459,7 +541,7 @@ form input:focus {
 
 @media (max-width: 768px) {
   html {
-    scroll-padding-top: 7rem; /* Mobile anchor offset accounting for wrapped navbar */
+    scroll-padding-top: 7rem;
   }
   .formrow {
     flex-direction: column;

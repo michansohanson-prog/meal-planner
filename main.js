@@ -16,7 +16,12 @@ const shopInput = document.querySelector("#shopListInput");
 const shopList = document.querySelector(".shopListEntries");
 
 const inventoryInput = document.querySelector("#inventoryInput");
-const invList = document.querySelector(".inventoryEntries");
+const inventoryContainer = document.querySelector("#inventoryContainer");
+
+// Location Radio Toggle References
+const mainLocRadios = document.querySelectorAll('input[name="mainLocation"]');
+const kitchenSubGroup = document.querySelector("#kitchenSubGroup");
+const downstairsSubGroup = document.querySelector("#downstairsSubGroup");
 
 // Profile and View State Elements
 const loginContainer = document.querySelector("#loginContainer");
@@ -29,6 +34,54 @@ const homeLink = document.querySelector("#homeLink");
 const appHeaderTitle = document.querySelector("#appHeaderTitle");
 
 let realtimeChannel = null;
+
+// Dynamic Toggle Handlers for Kitchen vs Downstairs Options
+mainLocRadios.forEach((radio) => {
+  radio.addEventListener("change", (e) => {
+    const value = e.target.value;
+    if (value === "Kitchen") {
+      kitchenSubGroup.style.display = "flex";
+      downstairsSubGroup.style.display = "none";
+      document
+        .querySelectorAll('input[name="kitchenSub"]')
+        .forEach((r) => (r.required = true));
+      document.querySelectorAll('input[name="downstairsSub"]').forEach((r) => {
+        r.required = false;
+        r.checked = false;
+      });
+    } else if (value === "Downstairs") {
+      downstairsSubGroup.style.display = "flex";
+      kitchenSubGroup.style.display = "none";
+      document
+        .querySelectorAll('input[name="downstairsSub"]')
+        .forEach((r) => (r.required = true));
+      document.querySelectorAll('input[name="kitchenSub"]').forEach((r) => {
+        r.required = false;
+        r.checked = false;
+      });
+    }
+  });
+});
+
+// Target Helper for Categorized Inventory Sub-Sections
+function getInvTargetList(location, subLocation) {
+  const target = document.querySelector(
+    `.inv-main-section[data-location="${location}"] .inv-sub-section[data-sub="${subLocation}"] ul`,
+  );
+  if (target) return target;
+
+  // Fallback target if location parameters are missing or unmatched
+  const fallback = document.querySelector(
+    '.inv-main-section[data-location="Kitchen"] .inv-sub-section[data-sub="Dry"] ul',
+  );
+  return fallback;
+}
+
+// Clear all nested Inventory Lists
+function clearInventoryLists() {
+  const invLists = document.querySelectorAll("#inventoryContainer ul");
+  invLists.forEach((ul) => (ul.innerHTML = ""));
+}
 
 // Check active session on load
 async function checkSession() {
@@ -49,7 +102,7 @@ async function checkSession() {
     }
     mealsContainer.innerHTML = "";
     shopList.innerHTML = "";
-    invList.innerHTML = "";
+    clearInventoryLists();
     if (realtimeChannel) window.supabaseClient.removeChannel(realtimeChannel);
   }
   renderProfiles();
@@ -59,7 +112,7 @@ async function checkSession() {
 async function loadUserData(username) {
   mealsContainer.innerHTML = "";
   shopList.innerHTML = "";
-  invList.innerHTML = "";
+  clearInventoryLists();
 
   // 1. Load Meals
   const { data: meals, error: mealsErr } = await window.supabaseClient
@@ -192,7 +245,7 @@ function setupRealtimeSync(username) {
       (payload) => {
         if (
           !document.querySelector(
-            `.inventoryEntries li[data-id="${payload.new.id}"]`,
+            `#inventoryContainer li[data-id="${payload.new.id}"]`,
           )
         ) {
           createInvLiElement(payload.new, false);
@@ -208,7 +261,7 @@ function setupRealtimeSync(username) {
       },
       (payload) => {
         const li = document.querySelector(
-          `.inventoryEntries li[data-id="${payload.new.id}"]`,
+          `#inventoryContainer li[data-id="${payload.new.id}"]`,
         );
         if (li) {
           const checkbox = li.querySelector('input[type="checkbox"]');
@@ -227,7 +280,7 @@ function setupRealtimeSync(username) {
       },
       (payload) => {
         const li = document.querySelector(
-          `.inventoryEntries li[data-id="${payload.old.id}"]`,
+          `#inventoryContainer li[data-id="${payload.old.id}"]`,
         );
         if (li) smoothRemove(li);
       },
@@ -475,7 +528,7 @@ function createShopLiElement(data, shouldSave = true) {
   shopCheck.type = "checkbox";
   shopCheck.checked = data.checked || false;
   shopLabel.textContent = data.text;
-  shopRemoveBtn.classList = "removeBtn";
+  shopRemoveBtn.className = "removeBtn";
   shopRemoveBtn.type = "button";
   shopRemoveBtn.dataset.action = "removeShopBtn";
   shopRemoveBtn.textContent = "Remove item";
@@ -555,7 +608,7 @@ function createInvLiElement(data, shouldSave = true) {
   invCheck.type = "checkbox";
   invCheck.checked = data.checked || false;
   invLabel.textContent = data.text;
-  invRemoveBtn.classList = "removeBtn";
+  invRemoveBtn.className = "removeBtn";
   invRemoveBtn.type = "button";
   invRemoveBtn.dataset.action = "removeInventoryBtn";
   invRemoveBtn.textContent = "Remove item";
@@ -564,7 +617,8 @@ function createInvLiElement(data, shouldSave = true) {
   invDiv.append(invLabel);
   invLi.append(invDiv, invRemoveBtn);
 
-  const existingInvLis = Array.from(invList.querySelectorAll("li"));
+  const targetUl = getInvTargetList(data.location, data.sub_location);
+  const existingInvLis = Array.from(targetUl.querySelectorAll("li"));
   let invInserted = false;
 
   for (const li of existingInvLis) {
@@ -575,14 +629,14 @@ function createInvLiElement(data, shouldSave = true) {
         sensitivity: "accent",
       }) < 0
     ) {
-      invList.insertBefore(invLi, li);
+      targetUl.insertBefore(invLi, li);
       invInserted = true;
       break;
     }
   }
 
   if (!invInserted) {
-    invList.append(invLi);
+    targetUl.append(invLi);
   }
 
   if (!shouldSave) {
@@ -609,6 +663,8 @@ function createInvLiElement(data, shouldSave = true) {
           profile_name: activeUser,
           text: data.text,
           checked: data.checked,
+          location: data.location,
+          sub_location: data.sub_location,
         },
       ])
       .select()
@@ -627,7 +683,7 @@ document.addEventListener("click", async (e) => {
   const action = button.dataset.action;
 
   switch (action) {
-    case "mealBtn":
+    case "mealBtn": {
       e.preventDefault();
       if (!mealNameInput.value.trim()) return;
 
@@ -653,8 +709,9 @@ document.addEventListener("click", async (e) => {
       mealDescInput.value = "";
       mealLinkInput.value = "";
       break;
+    }
 
-    case "shopBtn":
+    case "shopBtn": {
       e.preventDefault();
       const shopValue = shopInput.value.trim();
       if (!shopValue) return;
@@ -662,17 +719,52 @@ document.addEventListener("click", async (e) => {
       createShopLiElement({ text: shopValue, checked: false }, true);
       shopInput.value = "";
       break;
+    }
 
-    case "inventoryBtn":
+    case "inventoryBtn": {
       e.preventDefault();
       const invValue = inventoryInput.value.trim();
       if (!invValue) return;
 
-      createInvLiElement({ text: invValue, checked: false }, true);
+      const selectedLoc = document.querySelector(
+        'input[name="mainLocation"]:checked',
+      );
+      if (!selectedLoc) {
+        alert("Please select a location (Kitchen or Downstairs).");
+        return;
+      }
+
+      let selectedSub = null;
+      if (selectedLoc.value === "Kitchen") {
+        selectedSub = document.querySelector(
+          'input[name="kitchenSub"]:checked',
+        );
+      } else if (selectedLoc.value === "Downstairs") {
+        selectedSub = document.querySelector(
+          'input[name="downstairsSub"]:checked',
+        );
+      }
+
+      if (!selectedSub) {
+        alert(`Please select a sub-location for ${selectedLoc.value}.`);
+        return;
+      }
+
+      createInvLiElement(
+        {
+          text: invValue,
+          checked: false,
+          location: selectedLoc.value,
+          sub_location: selectedSub.value,
+        },
+        true,
+      );
+
       inventoryInput.value = "";
       break;
+    }
 
-    case "removeMealBtn":
+    case "removeMealBtn": {
       e.preventDefault();
       const mealCardToRemove = button.closest(".meal-card");
       if (mealCardToRemove) {
@@ -697,8 +789,9 @@ document.addEventListener("click", async (e) => {
         );
       }
       break;
+    }
 
-    case "removeShopBtn":
+    case "removeShopBtn": {
       e.preventDefault();
       const targetShopLi = button.closest("li");
       if (targetShopLi) {
@@ -717,8 +810,9 @@ document.addEventListener("click", async (e) => {
         }
       }
       break;
+    }
 
-    case "removeInventoryBtn":
+    case "removeInventoryBtn": {
       e.preventDefault();
       const targetInvLi = button.closest("li");
       if (targetInvLi) {
@@ -737,8 +831,9 @@ document.addEventListener("click", async (e) => {
         }
       }
       break;
+    }
 
-    case "removeProfile":
+    case "removeProfile": {
       e.preventDefault();
       const profileName = button.dataset.name;
       showConfirmDialog(`Remove profile for ${profileName}?`).then(
@@ -769,5 +864,6 @@ document.addEventListener("click", async (e) => {
         },
       );
       break;
+    }
   }
 });
