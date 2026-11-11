@@ -373,10 +373,13 @@ if (homeLink) {
 
 checkSession();
 
-// Helper function to handle the custom <dialog> confirmation modal
+// Helper function to handle the standard custom <dialog> confirmation modal
 function showConfirmDialog(message) {
   return new Promise((resolve) => {
     const dialog = document.querySelector("#confirmModal");
+    const h3Tag = dialog.querySelector("h3");
+    const pTag = dialog.querySelector("p");
+    const inputField = document.querySelector("#confirmNameInput");
     const yesBtn = document.querySelector("#confirmYes");
     const noBtn = document.querySelector("#confirmNo");
 
@@ -385,8 +388,14 @@ function showConfirmDialog(message) {
       return;
     }
 
-    const pTag = dialog.querySelector("p");
-    if (pTag) pTag.textContent = message;
+    // Reset standard modal state
+    h3Tag.textContent = "Tasty Planner";
+    pTag.textContent = message;
+    inputField.style.display = "none";
+    yesBtn.textContent = "Yes";
+    noBtn.textContent = "No";
+    yesBtn.style.display = "inline-block";
+    noBtn.style.display = "inline-block";
 
     dialog.showModal();
 
@@ -402,6 +411,76 @@ function showConfirmDialog(message) {
 
     const cleanup = () => {
       dialog.close();
+      yesBtn.removeEventListener("click", handleYes);
+      noBtn.removeEventListener("click", handleNo);
+    };
+
+    yesBtn.addEventListener("click", handleYes);
+    noBtn.addEventListener("click", handleNo);
+  });
+}
+
+// Helper function to handle strict profile deletion confirmation modal
+function showDeleteProfileDialog(targetProfileName) {
+  return new Promise((resolve) => {
+    const dialog = document.querySelector("#confirmModal");
+    const h3Tag = dialog.querySelector("h3");
+    const pTag = dialog.querySelector("p");
+    const inputField = document.querySelector("#confirmNameInput");
+    const yesBtn = document.querySelector("#confirmYes");
+    const noBtn = document.querySelector("#confirmNo");
+
+    if (!dialog) {
+      const userInput = window.prompt(
+        `Type the exact profile name to delete (${targetProfileName}):`,
+      );
+      resolve(userInput === targetProfileName);
+      return;
+    }
+
+    // Set header, subheader, show input field, and configure Delete/Cancel buttons
+    h3Tag.textContent = "Delete Profile?";
+    pTag.textContent = "Type the exact profile name to delete.";
+    inputField.style.display = "block";
+    inputField.value = "";
+    yesBtn.textContent = "Delete";
+    noBtn.textContent = "Cancel";
+    yesBtn.style.display = "inline-block";
+    noBtn.style.display = "inline-block";
+
+    dialog.showModal();
+    inputField.focus();
+
+    const handleYes = () => {
+      const typedValue = inputField.value.trim();
+      if (typedValue === targetProfileName) {
+        cleanup();
+        resolve(true);
+      } else {
+        // Name mismatch: wipe popup display, render error message, and revert back
+        h3Tag.textContent = "Tasty Planner";
+        pTag.textContent = "Profile name didn't match.";
+        inputField.style.display = "none";
+        yesBtn.style.display = "none";
+        noBtn.style.display = "none";
+
+        setTimeout(() => {
+          cleanup();
+          resolve(false);
+        }, 1500);
+      }
+    };
+
+    const handleNo = () => {
+      cleanup();
+      resolve(false);
+    };
+
+    const cleanup = () => {
+      dialog.close();
+      inputField.style.display = "none";
+      yesBtn.style.display = "inline-block";
+      noBtn.style.display = "inline-block";
       yesBtn.removeEventListener("click", handleYes);
       noBtn.removeEventListener("click", handleNo);
     };
@@ -836,33 +915,34 @@ document.addEventListener("click", async (e) => {
     case "removeProfile": {
       e.preventDefault();
       const profileName = button.dataset.name;
-      showConfirmDialog(`Remove profile for ${profileName}?`).then(
-        async (confirmed) => {
-          if (confirmed) {
-            await window.supabaseClient
-              .from("profiles")
-              .delete()
-              .eq("name", profileName);
-            await window.supabaseClient
-              .from("meals")
-              .delete()
-              .eq("profile_name", profileName);
-            await window.supabaseClient
-              .from("shopping_list")
-              .delete()
-              .eq("profile_name", profileName);
-            await window.supabaseClient
-              .from("inventory")
-              .delete()
-              .eq("profile_name", profileName);
 
-            if (localStorage.getItem("tasty_active_user") === profileName) {
-              localStorage.removeItem("tasty_active_user");
-            }
-            checkSession();
+      showDeleteProfileDialog(profileName).then(async (confirmed) => {
+        if (confirmed) {
+          await window.supabaseClient
+            .from("profiles")
+            .delete()
+            .eq("name", profileName);
+          await window.supabaseClient
+            .from("meals")
+            .delete()
+            .eq("profile_name", profileName);
+          await window.supabaseClient
+            .from("shopping_list")
+            .delete()
+            .eq("profile_name", profileName);
+          await window.supabaseClient
+            .from("inventory")
+            .delete()
+            .eq("profile_name", profileName);
+
+          if (localStorage.getItem("tasty_active_user") === profileName) {
+            localStorage.removeItem("tasty_active_user");
           }
-        },
-      );
+          checkSession();
+        } else {
+          checkSession();
+        }
+      });
       break;
     }
   }

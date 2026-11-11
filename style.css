@@ -498,6 +498,7 @@ form input:focus {
   color: #2c3e50;
   font-size: 1.3rem;
   margin-bottom: 10px;
+  text-shadow: none;
 }
 
 #confirmModal p {
