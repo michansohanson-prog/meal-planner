@@ -167,6 +167,18 @@ async function loadUserData(username) {
   }
 }
 
+// Helper to populate label text and glowing green qty span
+function setInventoryLabelContent(label, checkbox, text, qty) {
+  label.textContent = text;
+  if (qty > 1) {
+    const qtySpan = document.createElement("span");
+    qtySpan.className = "inv-qty-glow";
+    qtySpan.textContent = `qty: ${qty}`;
+    label.append(qtySpan);
+  }
+  if (checkbox) label.prepend(checkbox);
+}
+
 // Realtime sync listener with surgical element patching and smooth animations
 function setupRealtimeSync(username) {
   if (realtimeChannel) window.supabaseClient.removeChannel(realtimeChannel);
@@ -291,11 +303,8 @@ function setupRealtimeSync(username) {
           const label = li.querySelector("label");
           const qty = payload.new.quantity || 1;
           li.dataset.quantity = qty;
-          const displayText =
-            qty > 1 ? `${payload.new.text} (qty: ${qty})` : payload.new.text;
           if (label) {
-            label.textContent = displayText;
-            if (checkbox) label.prepend(checkbox);
+            setInventoryLabelContent(label, checkbox, payload.new.text, qty);
           }
         }
       },
@@ -828,10 +837,9 @@ function createInvLiElement(data, shouldSave = true) {
 
   const qty = data.quantity || 1;
   invLi.dataset.quantity = qty;
-  const displayText = qty > 1 ? `${data.text} (qty: ${qty})` : data.text;
-  invLabel.textContent = displayText;
 
-  invLabel.prepend(invCheck);
+  setInventoryLabelContent(invLabel, invCheck, data.text, qty);
+
   invDiv.append(invLabel);
   invLi.append(invDiv, btnGroup);
 
@@ -841,7 +849,7 @@ function createInvLiElement(data, shouldSave = true) {
 
   for (const li of existingInvLis) {
     const label = li.querySelector("label");
-    const existingText = label ? label.textContent.trim() : "";
+    const existingText = label ? label.textContent.split("qty:")[0].trim() : "";
     if (
       data.text.localeCompare(existingText, undefined, {
         sensitivity: "accent",
@@ -1042,17 +1050,13 @@ document.addEventListener("click", async (e) => {
       const currentQty = parseInt(targetInvLi.dataset.quantity || "1", 10);
       const label = targetInvLi.querySelector("label");
 
-      // Extract raw text by cloning label, removing checkbox, and stripping "(qty: X)"
+      // Extract raw text by cloning label, removing checkbox/qty span
       const cloneLabel = label.cloneNode(true);
       const checkboxInClone = cloneLabel.querySelector("input");
       if (checkboxInClone) checkboxInClone.remove();
-      let rawText = cloneLabel.textContent.trim();
-      if (currentQty > 1) {
-        rawText = rawText.replace(
-          new RegExp(`\\s*\\(qty:\\s*${currentQty}\\)$`),
-          "",
-        );
-      }
+      const qtySpanInClone = cloneLabel.querySelector(".inv-qty-glow");
+      if (qtySpanInClone) qtySpanInClone.remove();
+      const rawText = cloneLabel.textContent.trim();
 
       showEditInventoryDialog(rawText, currentQty).then(async (result) => {
         if (result) {
@@ -1060,12 +1064,8 @@ document.addEventListener("click", async (e) => {
           const newQty = result.quantity;
 
           targetInvLi.dataset.quantity = newQty;
-          const updatedDisplay =
-            newQty > 1 ? `${newText} (qty: ${newQty})` : newText;
-
           const checkbox = label.querySelector('input[type="checkbox"]');
-          label.textContent = updatedDisplay;
-          if (checkbox) label.prepend(checkbox);
+          setInventoryLabelContent(label, checkbox, newText, newQty);
 
           if (invId) {
             await window.supabaseClient
