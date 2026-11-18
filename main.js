@@ -330,10 +330,22 @@ function setupRealtimeSync(username) {
             checkbox.checked = payload.new.checked;
           }
           const label = li.querySelector("label");
-          const qty = payload.new.quantity || 1;
+          // Preserve existing quantity/text if omitted from realtime update payload
+          const qty =
+            payload.new.quantity !== undefined && payload.new.quantity !== null
+              ? payload.new.quantity
+              : parseInt(li.dataset.quantity || "1", 10);
           li.dataset.quantity = qty;
+
+          const text =
+            payload.new.text !== undefined && payload.new.text !== null
+              ? payload.new.text
+              : label
+                ? label.textContent.split("qty:")[0].trim()
+                : "";
+
           if (label) {
-            setInventoryLabelContent(label, checkbox, payload.new.text, qty);
+            setInventoryLabelContent(label, checkbox, text, qty);
           }
           const invBtn = li.querySelector(".invTransferBtn");
           if (invBtn) {
@@ -391,10 +403,22 @@ function setupRealtimeSync(username) {
             checkbox.checked = payload.new.checked;
           }
           const label = li.querySelector("label");
-          const qty = payload.new.quantity || 1;
+          // Preserve existing quantity/text if omitted from realtime update payload
+          const qty =
+            payload.new.quantity !== undefined && payload.new.quantity !== null
+              ? payload.new.quantity
+              : parseInt(li.dataset.quantity || "1", 10);
           li.dataset.quantity = qty;
+
+          const text =
+            payload.new.text !== undefined && payload.new.text !== null
+              ? payload.new.text
+              : label
+                ? label.textContent.split("qty:")[0].trim()
+                : "";
+
           if (label) {
-            setInventoryLabelContent(label, checkbox, payload.new.text, qty);
+            setInventoryLabelContent(label, checkbox, text, qty);
           }
         }
       },
