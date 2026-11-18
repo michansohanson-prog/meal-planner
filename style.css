@@ -477,7 +477,7 @@ form input:focus {
   font-size: 0.72rem;
   border-radius: 1.5rem;
   border: none;
-  background: rgb(180, 120, 0); /* Distinct warm amber/gold color */
+  background: rgb(180, 120, 0);
   box-shadow: 2px 2px 2px black;
   cursor: pointer;
 }

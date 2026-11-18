@@ -72,6 +72,27 @@ const modalDownstairsSubGroup = document.querySelector(
   "#modalDownstairsSubGroup",
 );
 
+// Modal Send Quantity Stepper references
+const modalSendQtyMinus = document.querySelector("#modalSendQtyMinus");
+const modalSendQtyPlus = document.querySelector("#modalSendQtyPlus");
+const modalSendQtyDisplay = document.querySelector("#modalSendQtyDisplay");
+
+let modalSendQuantity = 1;
+
+if (modalSendQtyMinus && modalSendQtyPlus && modalSendQtyDisplay) {
+  modalSendQtyMinus.addEventListener("click", () => {
+    if (modalSendQuantity > 1) {
+      modalSendQuantity--;
+      modalSendQtyDisplay.textContent = modalSendQuantity;
+    }
+  });
+
+  modalSendQtyPlus.addEventListener("click", () => {
+    modalSendQuantity++;
+    modalSendQtyDisplay.textContent = modalSendQuantity;
+  });
+}
+
 modalMainLocRadios.forEach((radio) => {
   radio.addEventListener("change", (e) => {
     const value = e.target.value;
@@ -625,7 +646,7 @@ function showEditInventoryDialog(currentText, currentQty) {
 }
 
 // Helper function to handle sending a shopping list item to inventory modal
-function showSendToInventoryDialog(itemText) {
+function showSendToInventoryDialog(itemText, initialQty) {
   return new Promise((resolve) => {
     const dialog = document.querySelector("#confirmModal");
     const h3Tag = dialog.querySelector("h3");
@@ -642,7 +663,7 @@ function showSendToInventoryDialog(itemText) {
     if (!dialog) {
       const location = window.prompt("Location (Kitchen or Downstairs):");
       const sub = window.prompt("Sub-location:");
-      resolve({ location, sub_location: sub });
+      resolve({ location, sub_location: sub, quantity: initialQty });
       return;
     }
 
@@ -653,6 +674,10 @@ function showSendToInventoryDialog(itemText) {
     editContainer.style.display = "none";
     sendInvContainer.style.display = "block";
     itemNameSpan.textContent = itemText;
+
+    // Set auto-populated quantity
+    modalSendQuantity = initialQty || 1;
+    modalSendQtyDisplay.textContent = modalSendQuantity;
 
     // Reset modal radios
     document
@@ -707,6 +732,7 @@ function showSendToInventoryDialog(itemText) {
       resolve({
         location: selectedLoc.value,
         sub_location: selectedSub.value,
+        quantity: modalSendQuantity,
       });
     };
 
@@ -760,7 +786,7 @@ function showDeleteProfileDialog(targetProfileName) {
     yesBtn.textContent = "Del";
     noBtn.textContent = "Cancel";
     yesBtn.style.display = "inline-block";
-    noBtn.style.display = "inline-block";
+    yesBtn.style.display = "inline-block";
 
     dialog.showModal();
     inputField.focus();
@@ -1304,13 +1330,13 @@ document.addEventListener("click", async (e) => {
       if (qtySpanInClone) qtySpanInClone.remove();
       const rawText = cloneLabel.textContent.trim();
 
-      showSendToInventoryDialog(rawText).then(async (locResult) => {
+      showSendToInventoryDialog(rawText, currentQty).then(async (locResult) => {
         if (locResult) {
-          // Add to inventory
+          // Add to inventory with quantity chosen in popup
           createInvLiElement(
             {
               text: rawText,
-              quantity: currentQty,
+              quantity: locResult.quantity,
               checked: false,
               location: locResult.location,
               sub_location: locResult.sub_location,

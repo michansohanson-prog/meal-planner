@@ -4,10 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Meal Planner</title>
-    <link rel="stylesheet" href="style.css?v=1.28" />
+    <link rel="stylesheet" href="style.css?v=1.29" />
     <!-- Supabase Library CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="main.js?v=1.28" defer></script>
+    <script src="main.js?v=1.29" defer></script>
   </head>
   <body>
     <!-- Login Screen View -->
@@ -341,6 +341,32 @@
         Send to Inventory:
         <span id="modalSendItemName" style="color: white"></span>
       </p>
+
+      <!-- Modal Quantity Row -->
+      <div
+        class="inv-form-qty-group"
+        style="margin: 6px 0 12px 0; display: inline-flex"
+      >
+        <span class="group-label">Qty:</span>
+        <button
+          type="button"
+          id="modalSendQtyMinus"
+          class="inv-qty-step-btn"
+          aria-label="Decrease quantity"
+        >
+          -
+        </button>
+        <span id="modalSendQtyDisplay" class="inv-qty-val">1</span>
+        <button
+          type="button"
+          id="modalSendQtyPlus"
+          class="inv-qty-step-btn"
+          aria-label="Increase quantity"
+        >
+          +
+        </button>
+      </div>
+
       <!-- Main Location Selection -->
       <div class="inventory-location-group" style="margin: 6px 0">
         <p class="group-label">Location (Select One):</p>
