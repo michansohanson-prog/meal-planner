@@ -14,6 +14,26 @@ const mealsContainer = document.querySelector("#meals");
 
 const shopInput = document.querySelector("#shopListInput");
 const shopList = document.querySelector(".shopListEntries");
+const shopFormQtyMinus = document.querySelector("#shopFormQtyMinus");
+const shopFormQtyPlus = document.querySelector("#shopFormQtyPlus");
+const shopFormQtyDisplay = document.querySelector("#shopFormQtyDisplay");
+
+let newShopQuantity = 1;
+
+// Add-Shop Form Quantity Stepper Handlers
+if (shopFormQtyMinus && shopFormQtyPlus && shopFormQtyDisplay) {
+  shopFormQtyMinus.addEventListener("click", () => {
+    if (newShopQuantity > 1) {
+      newShopQuantity--;
+      shopFormQtyDisplay.textContent = newShopQuantity;
+    }
+  });
+
+  shopFormQtyPlus.addEventListener("click", () => {
+    newShopQuantity++;
+    shopFormQtyDisplay.textContent = newShopQuantity;
+  });
+}
 
 const inventoryInput = document.querySelector("#inventoryInput");
 const inventoryContainer = document.querySelector("#inventoryContainer");
@@ -42,6 +62,46 @@ if (invFormQtyMinus && invFormQtyPlus && invFormQtyDisplay) {
 const mainLocRadios = document.querySelectorAll('input[name="mainLocation"]');
 const kitchenSubGroup = document.querySelector("#kitchenSubGroup");
 const downstairsSubGroup = document.querySelector("#downstairsSubGroup");
+
+// Modal Location Radio Toggle References
+const modalMainLocRadios = document.querySelectorAll(
+  'input[name="modalMainLocation"]',
+);
+const modalKitchenSubGroup = document.querySelector("#modalKitchenSubGroup");
+const modalDownstairsSubGroup = document.querySelector(
+  "#modalDownstairsSubGroup",
+);
+
+modalMainLocRadios.forEach((radio) => {
+  radio.addEventListener("change", (e) => {
+    const value = e.target.value;
+    if (value === "Kitchen") {
+      modalKitchenSubGroup.style.display = "flex";
+      modalDownstairsSubGroup.style.display = "none";
+      document
+        .querySelectorAll('input[name="modalKitchenSub"]')
+        .forEach((r) => (r.required = true));
+      document
+        .querySelectorAll('input[name="modalDownstairsSub"]')
+        .forEach((r) => {
+          r.required = false;
+          r.checked = false;
+        });
+    } else if (value === "Downstairs") {
+      modalDownstairsSubGroup.style.display = "flex";
+      modalKitchenSubGroup.style.display = "none";
+      document
+        .querySelectorAll('input[name="modalDownstairsSub"]')
+        .forEach((r) => (r.required = true));
+      document
+        .querySelectorAll('input[name="modalKitchenSub"]')
+        .forEach((r) => {
+          r.required = false;
+          r.checked = false;
+        });
+    }
+  });
+});
 
 // Profile and View State Elements
 const loginContainer = document.querySelector("#loginContainer");
@@ -90,7 +150,6 @@ function getInvTargetList(location, subLocation) {
   );
   if (target) return target;
 
-  // Fallback target if location parameters are missing or unmatched
   const fallback = document.querySelector(
     '.inv-main-section[data-location="Kitchen"] .inv-sub-section[data-sub="Dry"] ul',
   );
@@ -248,6 +307,16 @@ function setupRealtimeSync(username) {
           const checkbox = li.querySelector('input[type="checkbox"]');
           if (checkbox && checkbox.checked !== payload.new.checked) {
             checkbox.checked = payload.new.checked;
+          }
+          const label = li.querySelector("label");
+          const qty = payload.new.quantity || 1;
+          li.dataset.quantity = qty;
+          if (label) {
+            setInventoryLabelContent(label, checkbox, payload.new.text, qty);
+          }
+          const invBtn = li.querySelector(".invTransferBtn");
+          if (invBtn) {
+            invBtn.disabled = !checkbox.checked;
           }
         }
       },
@@ -419,6 +488,9 @@ function showConfirmDialog(message) {
     const pTag = dialog.querySelector("p");
     const inputField = document.querySelector("#confirmNameInput");
     const editContainer = document.querySelector("#modalEditContainer");
+    const sendInvContainer = document.querySelector(
+      "#modalSendInventoryContainer",
+    );
     const yesBtn = document.querySelector("#confirmYes");
     const noBtn = document.querySelector("#confirmNo");
 
@@ -427,12 +499,12 @@ function showConfirmDialog(message) {
       return;
     }
 
-    // Reset standard modal state
     h3Tag.textContent = "Tasty Planner";
     pTag.textContent = message;
     pTag.style.display = "block";
     inputField.style.display = "none";
     editContainer.style.display = "none";
+    sendInvContainer.style.display = "none";
     yesBtn.textContent = "Yes";
     noBtn.textContent = "No";
     yesBtn.style.display = "inline-block";
@@ -469,6 +541,9 @@ function showEditInventoryDialog(currentText, currentQty) {
     const pTag = dialog.querySelector("p");
     const inputField = document.querySelector("#confirmNameInput");
     const editContainer = document.querySelector("#modalEditContainer");
+    const sendInvContainer = document.querySelector(
+      "#modalSendInventoryContainer",
+    );
     const editText = document.querySelector("#modalEditText");
     const qtyDisplay = document.querySelector("#modalQtyDisplay");
     const qtyMinus = document.querySelector("#modalQtyMinus");
@@ -488,11 +563,11 @@ function showEditInventoryDialog(currentText, currentQty) {
       return;
     }
 
-    // Configure Edit Modal UI
-    h3Tag.textContent = "Edit Inventory Item";
+    h3Tag.textContent = "Edit Item";
     pTag.textContent = "";
     pTag.style.display = "none";
     inputField.style.display = "none";
+    sendInvContainer.style.display = "none";
     editContainer.style.display = "block";
 
     editText.value = currentText;
@@ -549,6 +624,110 @@ function showEditInventoryDialog(currentText, currentQty) {
   });
 }
 
+// Helper function to handle sending a shopping list item to inventory modal
+function showSendToInventoryDialog(itemText) {
+  return new Promise((resolve) => {
+    const dialog = document.querySelector("#confirmModal");
+    const h3Tag = dialog.querySelector("h3");
+    const pTag = dialog.querySelector("p");
+    const inputField = document.querySelector("#confirmNameInput");
+    const editContainer = document.querySelector("#modalEditContainer");
+    const sendInvContainer = document.querySelector(
+      "#modalSendInventoryContainer",
+    );
+    const itemNameSpan = document.querySelector("#modalSendItemName");
+    const yesBtn = document.querySelector("#confirmYes");
+    const noBtn = document.querySelector("#confirmNo");
+
+    if (!dialog) {
+      const location = window.prompt("Location (Kitchen or Downstairs):");
+      const sub = window.prompt("Sub-location:");
+      resolve({ location, sub_location: sub });
+      return;
+    }
+
+    h3Tag.textContent = "Add to Inventory";
+    pTag.textContent = "";
+    pTag.style.display = "none";
+    inputField.style.display = "none";
+    editContainer.style.display = "none";
+    sendInvContainer.style.display = "block";
+    itemNameSpan.textContent = itemText;
+
+    // Reset modal radios
+    document
+      .querySelectorAll('input[name="modalMainLocation"]')
+      .forEach((r) => (r.checked = false));
+    document.querySelectorAll('input[name="modalKitchenSub"]').forEach((r) => {
+      r.checked = false;
+      r.required = false;
+    });
+    document
+      .querySelectorAll('input[name="modalDownstairsSub"]')
+      .forEach((r) => {
+        r.checked = false;
+        r.required = false;
+      });
+    modalKitchenSubGroup.style.display = "none";
+    modalDownstairsSubGroup.style.display = "none";
+
+    yesBtn.textContent = "Add to Inventory";
+    noBtn.textContent = "Cancel";
+    yesBtn.style.display = "inline-block";
+    noBtn.style.display = "inline-block";
+
+    dialog.showModal();
+
+    const handleYes = () => {
+      const selectedLoc = document.querySelector(
+        'input[name="modalMainLocation"]:checked',
+      );
+      if (!selectedLoc) {
+        alert("Please select a location (Kitchen or Downstairs).");
+        return;
+      }
+
+      let selectedSub = null;
+      if (selectedLoc.value === "Kitchen") {
+        selectedSub = document.querySelector(
+          'input[name="modalKitchenSub"]:checked',
+        );
+      } else if (selectedLoc.value === "Downstairs") {
+        selectedSub = document.querySelector(
+          'input[name="modalDownstairsSub"]:checked',
+        );
+      }
+
+      if (!selectedSub) {
+        alert(`Please select a sub-location for ${selectedLoc.value}.`);
+        return;
+      }
+
+      cleanup();
+      resolve({
+        location: selectedLoc.value,
+        sub_location: selectedSub.value,
+      });
+    };
+
+    const handleNo = () => {
+      cleanup();
+      resolve(null);
+    };
+
+    const cleanup = () => {
+      dialog.close();
+      pTag.style.display = "block";
+      sendInvContainer.style.display = "none";
+      yesBtn.removeEventListener("click", handleYes);
+      noBtn.removeEventListener("click", handleNo);
+    };
+
+    yesBtn.addEventListener("click", handleYes);
+    noBtn.addEventListener("click", handleNo);
+  });
+}
+
 // Helper function to handle strict profile deletion confirmation modal
 function showDeleteProfileDialog(targetProfileName) {
   return new Promise((resolve) => {
@@ -557,6 +736,9 @@ function showDeleteProfileDialog(targetProfileName) {
     const pTag = dialog.querySelector("p");
     const inputField = document.querySelector("#confirmNameInput");
     const editContainer = document.querySelector("#modalEditContainer");
+    const sendInvContainer = document.querySelector(
+      "#modalSendInventoryContainer",
+    );
     const yesBtn = document.querySelector("#confirmYes");
     const noBtn = document.querySelector("#confirmNo");
 
@@ -568,11 +750,11 @@ function showDeleteProfileDialog(targetProfileName) {
       return;
     }
 
-    // Set header, subheader, show input field, and configure Delete/Cancel buttons
     h3Tag.textContent = "Delete Profile?";
     pTag.textContent = "Type the exact profile name to delete.";
     pTag.style.display = "block";
     editContainer.style.display = "none";
+    sendInvContainer.style.display = "none";
     inputField.style.display = "block";
     inputField.value = "";
     yesBtn.textContent = "Del";
@@ -589,7 +771,6 @@ function showDeleteProfileDialog(targetProfileName) {
         cleanup();
         resolve(true);
       } else {
-        // Name mismatch: wipe popup display, render error message, and revert back
         h3Tag.textContent = "Tasty Planner";
         pTag.textContent = "Profile name didn't match.";
         inputField.style.display = "none";
@@ -731,29 +912,51 @@ function createShopLiElement(data, shouldSave = true) {
     shopLi.style.opacity = "0";
   }
 
-  const shopdiv = document.createElement("div");
+  const shopDiv = document.createElement("div");
   const shopCheck = document.createElement("input");
   const shopLabel = document.createElement("label");
-  const shopRemoveBtn = document.createElement("button");
 
-  shopCheck.type = "checkbox";
-  shopCheck.checked = data.checked || false;
-  shopLabel.textContent = data.text;
+  const btnGroup = document.createElement("div");
+  btnGroup.className = "shop-btn-group";
+
+  const invTransferBtn = document.createElement("button");
+  invTransferBtn.className = "invTransferBtn";
+  invTransferBtn.type = "button";
+  invTransferBtn.dataset.action = "sendToInventoryBtn";
+  invTransferBtn.textContent = "Inv";
+  invTransferBtn.disabled = !data.checked; // Only enabled if checked
+
+  const editShopBtn = document.createElement("button");
+  editShopBtn.className = "editBtn";
+  editShopBtn.type = "button";
+  editShopBtn.dataset.action = "editShopBtn";
+  editShopBtn.textContent = "Edit";
+
+  const shopRemoveBtn = document.createElement("button");
   shopRemoveBtn.className = "removeBtn";
   shopRemoveBtn.type = "button";
   shopRemoveBtn.dataset.action = "removeShopBtn";
   shopRemoveBtn.textContent = "Del";
 
-  shopLabel.prepend(shopCheck);
-  shopdiv.append(shopLabel);
-  shopLi.append(shopdiv, shopRemoveBtn);
+  btnGroup.append(invTransferBtn, editShopBtn, shopRemoveBtn);
+
+  shopCheck.type = "checkbox";
+  shopCheck.checked = data.checked || false;
+
+  const qty = data.quantity || 1;
+  shopLi.dataset.quantity = qty;
+
+  setInventoryLabelContent(shopLabel, shopCheck, data.text, qty);
+
+  shopDiv.append(shopLabel);
+  shopLi.append(shopDiv, btnGroup);
 
   const existingShopLis = Array.from(shopList.querySelectorAll("li"));
   let shopInserted = false;
 
   for (const li of existingShopLis) {
     const label = li.querySelector("label");
-    const existingText = label ? label.textContent.trim() : "";
+    const existingText = label ? label.textContent.split("qty:")[0].trim() : "";
     if (
       data.text.localeCompare(existingText, undefined, {
         sensitivity: "accent",
@@ -776,6 +979,7 @@ function createShopLiElement(data, shouldSave = true) {
   }
 
   shopCheck.addEventListener("change", async () => {
+    invTransferBtn.disabled = !shopCheck.checked;
     if (shopLi.dataset.id) {
       await window.supabaseClient
         .from("shopping_list")
@@ -792,6 +996,7 @@ function createShopLiElement(data, shouldSave = true) {
         {
           profile_name: activeUser,
           text: data.text,
+          quantity: qty,
           checked: data.checked,
         },
       ])
@@ -943,8 +1148,13 @@ document.addEventListener("click", async (e) => {
       const shopValue = shopInput.value.trim();
       if (!shopValue) return;
 
-      createShopLiElement({ text: shopValue, checked: false }, true);
+      createShopLiElement(
+        { text: shopValue, quantity: newShopQuantity, checked: false },
+        true,
+      );
       shopInput.value = "";
+      newShopQuantity = 1;
+      if (shopFormQtyDisplay) shopFormQtyDisplay.textContent = "1";
       break;
     }
 
@@ -1039,6 +1249,86 @@ document.addEventListener("click", async (e) => {
           console.log("item must be checked before it can be removed.");
         }
       }
+      break;
+    }
+
+    case "editShopBtn": {
+      e.preventDefault();
+      const targetShopLi = button.closest("li");
+      if (!targetShopLi) return;
+      const shopId = targetShopLi.dataset.id;
+      const currentQty = parseInt(targetShopLi.dataset.quantity || "1", 10);
+      const label = targetShopLi.querySelector("label");
+
+      const cloneLabel = label.cloneNode(true);
+      const checkboxInClone = cloneLabel.querySelector("input");
+      if (checkboxInClone) checkboxInClone.remove();
+      const qtySpanInClone = cloneLabel.querySelector(".inv-qty-glow");
+      if (qtySpanInClone) qtySpanInClone.remove();
+      const rawText = cloneLabel.textContent.trim();
+
+      showEditInventoryDialog(rawText, currentQty).then(async (result) => {
+        if (result) {
+          const newText = result.text;
+          const newQty = result.quantity;
+
+          targetShopLi.dataset.quantity = newQty;
+          const checkbox = label.querySelector('input[type="checkbox"]');
+          setInventoryLabelContent(label, checkbox, newText, newQty);
+
+          if (shopId) {
+            await window.supabaseClient
+              .from("shopping_list")
+              .update({ text: newText, quantity: newQty })
+              .eq("id", shopId);
+          }
+        }
+      });
+      break;
+    }
+
+    case "sendToInventoryBtn": {
+      e.preventDefault();
+      const targetShopLi = button.closest("li");
+      if (!targetShopLi) return;
+      const checkbox = targetShopLi.querySelector('input[type="checkbox"]');
+      if (!checkbox || !checkbox.checked) return;
+
+      const currentQty = parseInt(targetShopLi.dataset.quantity || "1", 10);
+      const label = targetShopLi.querySelector("label");
+
+      const cloneLabel = label.cloneNode(true);
+      const checkboxInClone = cloneLabel.querySelector("input");
+      if (checkboxInClone) checkboxInClone.remove();
+      const qtySpanInClone = cloneLabel.querySelector(".inv-qty-glow");
+      if (qtySpanInClone) qtySpanInClone.remove();
+      const rawText = cloneLabel.textContent.trim();
+
+      showSendToInventoryDialog(rawText).then(async (locResult) => {
+        if (locResult) {
+          // Add to inventory
+          createInvLiElement(
+            {
+              text: rawText,
+              quantity: currentQty,
+              checked: false,
+              location: locResult.location,
+              sub_location: locResult.sub_location,
+            },
+            true,
+          );
+
+          // Remove from shopping list
+          const shopId = targetShopLi.dataset.id;
+          if (shopId) {
+            await window.supabaseClient
+              .from("shopping_list")
+              .delete()
+              .eq("id", shopId);
+          }
+          smoothRemove(targetShopLi);
+        }
+      });
       break;
     }
 

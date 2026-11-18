@@ -4,10 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Meal Planner</title>
-    <link rel="stylesheet" href="style.css?v=1.27" />
+    <link rel="stylesheet" href="style.css?v=1.28" />
     <!-- Supabase Library CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="main.js?v=1.27" defer></script>
+    <script src="main.js?v=1.28" defer></script>
   </head>
   <body>
     <!-- Login Screen View -->
@@ -87,12 +87,35 @@
 
         <section class="shop-list" id="shop-list">
           <h2>Shopping List</h2>
-          <form id="shopForm">
-            <input
-              id="shopListInput"
-              type="text"
-              placeholder="Looking to protect yourself, or deal some damage?"
-            />
+          <form id="shopForm" class="inv-add-card">
+            <div class="inv-input-qty-row">
+              <input
+                id="shopListInput"
+                type="text"
+                placeholder="Looking to protect yourself, or deal some damage?"
+                required
+              />
+              <div class="inv-form-qty-group">
+                <span class="group-label">Qty:</span>
+                <button
+                  type="button"
+                  id="shopFormQtyMinus"
+                  class="inv-qty-step-btn"
+                  aria-label="Decrease quantity"
+                >
+                  -
+                </button>
+                <span id="shopFormQtyDisplay" class="inv-qty-val">1</span>
+                <button
+                  type="button"
+                  id="shopFormQtyPlus"
+                  class="inv-qty-step-btn"
+                  aria-label="Increase quantity"
+                >
+                  +
+                </button>
+              </div>
+            </div>
             <button type="button" id="shopAddBtn" data-action="shopBtn">
               Add to List
             </button>
@@ -300,6 +323,88 @@
           >1</span
         >
         <button type="button" id="modalQtyPlus" class="modal-qty-btn">+</button>
+      </div>
+    </div>
+    <!-- Send to Inventory Modal Container -->
+    <div
+      id="modalSendInventoryContainer"
+      style="display: none; margin: 12px 0; text-align: left"
+    >
+      <p
+        style="
+          font-size: 0.95rem;
+          font-weight: bold;
+          margin-bottom: 8px;
+          color: rgb(97, 237, 255);
+        "
+      >
+        Send to Inventory:
+        <span id="modalSendItemName" style="color: white"></span>
+      </p>
+      <!-- Main Location Selection -->
+      <div class="inventory-location-group" style="margin: 6px 0">
+        <p class="group-label">Location (Select One):</p>
+        <div class="checkbox-row">
+          <label>
+            <input
+              type="radio"
+              name="modalMainLocation"
+              value="Kitchen"
+              required
+            />
+            Kitchen
+          </label>
+          <label>
+            <input type="radio" name="modalMainLocation" value="Downstairs" />
+            Downstairs
+          </label>
+        </div>
+      </div>
+
+      <!-- Sub-location Selection: Kitchen -->
+      <div
+        id="modalKitchenSubGroup"
+        class="inventory-subgroup"
+        style="display: none; margin: 6px 0"
+      >
+        <p class="group-label">Kitchen Storage (Select One):</p>
+        <div class="checkbox-row">
+          <label>
+            <input type="radio" name="modalKitchenSub" value="Dry" />
+            Dry
+          </label>
+          <label>
+            <input type="radio" name="modalKitchenSub" value="Fridge" />
+            Fridge
+          </label>
+          <label>
+            <input type="radio" name="modalKitchenSub" value="Freezer (main)" />
+            Freezer (main)
+          </label>
+        </div>
+      </div>
+
+      <!-- Sub-location Selection: Downstairs -->
+      <div
+        id="modalDownstairsSubGroup"
+        class="inventory-subgroup"
+        style="display: none; margin: 6px 0"
+      >
+        <p class="group-label">Downstairs Storage (Select One):</p>
+        <div class="checkbox-row">
+          <label>
+            <input type="radio" name="modalDownstairsSub" value="Pantry" />
+            Pantry
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="modalDownstairsSub"
+              value="Freezer (downstairs)"
+            />
+            Freezer (downstairs)
+          </label>
+        </div>
       </div>
     </div>
     <div class="modal-buttons">
