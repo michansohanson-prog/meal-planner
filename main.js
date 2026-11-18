@@ -264,9 +264,26 @@ function setupRealtimeSync(username) {
           `#inventoryContainer li[data-id="${payload.new.id}"]`,
         );
         if (li) {
+          // Re-render or update text/qty/checked state dynamically
           const checkbox = li.querySelector('input[type="checkbox"]');
           if (checkbox && checkbox.checked !== payload.new.checked) {
             checkbox.checked = payload.new.checked;
+          }
+          const label = li.querySelector("label");
+          const qty = payload.new.quantity || 1;
+          const displayText =
+            qty > 1 ? `${payload.new.text} (qty: ${qty})` : payload.new.text;
+          if (label) {
+            // Keep checkbox intact, update text node
+            const textNode = Array.from(label.childNodes).find(
+              (n) => n.nodeType === Node.TEXT_NODE,
+            );
+            if (textNode) {
+              textNode.nodeValue = ` ${displayText}`;
+            } else {
+              label.textContent = displayText;
+              label.prepend(checkbox);
+            }
           }
         }
       },
@@ -315,7 +332,7 @@ async function renderProfiles() {
     });
 
     const removeBtn = document.createElement("button");
-    removeBtn.textContent = "Delete";
+    removeBtn.textContent = "Del";
     removeBtn.classList.add("removeBtn");
     removeBtn.type = "button";
     removeBtn.dataset.action = "removeProfile";
@@ -380,6 +397,7 @@ function showConfirmDialog(message) {
     const h3Tag = dialog.querySelector("h3");
     const pTag = dialog.querySelector("p");
     const inputField = document.querySelector("#confirmNameInput");
+    const editContainer = document.querySelector("#modalEditContainer");
     const yesBtn = document.querySelector("#confirmYes");
     const noBtn = document.querySelector("#confirmNo");
 
@@ -392,6 +410,7 @@ function showConfirmDialog(message) {
     h3Tag.textContent = "Tasty Planner";
     pTag.textContent = message;
     inputField.style.display = "none";
+    editContainer.style.display = "none";
     yesBtn.textContent = "Yes";
     noBtn.textContent = "No";
     yesBtn.style.display = "inline-block";
@@ -420,6 +439,94 @@ function showConfirmDialog(message) {
   });
 }
 
+// Helper function to handle inventory edit modal popup
+function showEditInventoryDialog(currentText, currentQty) {
+  return new Promise((resolve) => {
+    const dialog = document.querySelector("#confirmModal");
+    const h3Tag = dialog.querySelector("h3");
+    const pTag = dialog.querySelector("p");
+    const inputField = document.querySelector("#confirmNameInput");
+    const editContainer = document.querySelector("#modalEditContainer");
+    const editText = document.querySelector("#modalEditText");
+    const qtyDisplay = document.querySelector("#modalQtyDisplay");
+    const qtyMinus = document.querySelector("#modalQtyMinus");
+    const qtyPlus = document.querySelector("#modalQtyPlus");
+    const yesBtn = document.querySelector("#confirmYes");
+    const noBtn = document.querySelector("#confirmNo");
+
+    if (!dialog) {
+      const newText = window.prompt("Edit item text:", currentText);
+      if (newText === null) {
+        resolve(null);
+        return;
+      }
+      const newQtyStr = window.prompt("Edit quantity:", currentQty);
+      const newQty = parseInt(newQtyStr, 10) || 1;
+      resolve({ text: newText.trim(), quantity: newQty });
+      return;
+    }
+
+    // Configure Edit Modal UI
+    h3Tag.textContent = "Edit Inventory Item";
+    pTag.textContent = "";
+    pTag.style.display = "none";
+    inputField.style.display = "none";
+    editContainer.style.display = "block";
+
+    editText.value = currentText;
+    let editableQty = currentQty || 1;
+    qtyDisplay.textContent = editableQty;
+
+    yesBtn.textContent = "Save";
+    noBtn.textContent = "Cancel";
+    yesBtn.style.display = "inline-block";
+    noBtn.style.display = "inline-block";
+
+    const handleMinus = () => {
+      if (editableQty > 1) {
+        editableQty--;
+        qtyDisplay.textContent = editableQty;
+      }
+    };
+
+    const handlePlus = () => {
+      editableQty++;
+      qtyDisplay.textContent = editableQty;
+    };
+
+    qtyMinus.addEventListener("click", handleMinus);
+    qtyPlus.addEventListener("click", handlePlus);
+
+    dialog.showModal();
+    editText.focus();
+
+    const handleSave = () => {
+      const updatedText = editText.value.trim();
+      if (!updatedText) return;
+      cleanup();
+      resolve({ text: updatedText, quantity: editableQty });
+    };
+
+    const handleCancel = () => {
+      cleanup();
+      resolve(null);
+    };
+
+    const cleanup = () => {
+      dialog.close();
+      pTag.style.display = "block";
+      editContainer.style.display = "none";
+      qtyMinus.removeEventListener("click", handleMinus);
+      qtyPlus.removeEventListener("click", handlePlus);
+      yesBtn.removeEventListener("click", handleSave);
+      noBtn.removeEventListener("click", handleCancel);
+    };
+
+    yesBtn.addEventListener("click", handleSave);
+    noBtn.addEventListener("click", handleCancel);
+  });
+}
+
 // Helper function to handle strict profile deletion confirmation modal
 function showDeleteProfileDialog(targetProfileName) {
   return new Promise((resolve) => {
@@ -427,6 +534,7 @@ function showDeleteProfileDialog(targetProfileName) {
     const h3Tag = dialog.querySelector("h3");
     const pTag = dialog.querySelector("p");
     const inputField = document.querySelector("#confirmNameInput");
+    const editContainer = document.querySelector("#modalEditContainer");
     const yesBtn = document.querySelector("#confirmYes");
     const noBtn = document.querySelector("#confirmNo");
 
@@ -441,9 +549,11 @@ function showDeleteProfileDialog(targetProfileName) {
     // Set header, subheader, show input field, and configure Delete/Cancel buttons
     h3Tag.textContent = "Delete Profile?";
     pTag.textContent = "Type the exact profile name to delete.";
+    pTag.style.display = "block";
+    editContainer.style.display = "none";
     inputField.style.display = "block";
     inputField.value = "";
-    yesBtn.textContent = "Delete";
+    yesBtn.textContent = "Del";
     noBtn.textContent = "Cancel";
     yesBtn.style.display = "inline-block";
     noBtn.style.display = "inline-block";
@@ -532,7 +642,7 @@ function createMealCardElement(data, shouldSave = true) {
   removeMealBtn.classList.add("removeBtn");
   removeMealBtn.type = "button";
   removeMealBtn.dataset.action = "removeMealBtn";
-  removeMealBtn.textContent = "Remove Meal";
+  removeMealBtn.textContent = "Del";
 
   btnWrapper.append(removeMealBtn);
   mealCard.append(mealTitle, mealDateP, mealDescP, recipeLink, btnWrapper);
@@ -610,7 +720,7 @@ function createShopLiElement(data, shouldSave = true) {
   shopRemoveBtn.className = "removeBtn";
   shopRemoveBtn.type = "button";
   shopRemoveBtn.dataset.action = "removeShopBtn";
-  shopRemoveBtn.textContent = "Remove item";
+  shopRemoveBtn.textContent = "Del";
 
   shopLabel.prepend(shopCheck);
   shopdiv.append(shopLabel);
@@ -682,19 +792,35 @@ function createInvLiElement(data, shouldSave = true) {
   const invDiv = document.createElement("div");
   const invCheck = document.createElement("input");
   const invLabel = document.createElement("label");
-  const invRemoveBtn = document.createElement("button");
 
-  invCheck.type = "checkbox";
-  invCheck.checked = data.checked || false;
-  invLabel.textContent = data.text;
+  const btnGroup = document.createElement("div");
+  btnGroup.className = "inventory-btn-group";
+
+  const editInvBtn = document.createElement("button");
+  editInvBtn.className = "editBtn";
+  editInvBtn.type = "button";
+  editInvBtn.dataset.action = "editInventoryBtn";
+  editInvBtn.textContent = "Edit";
+
+  const invRemoveBtn = document.createElement("button");
   invRemoveBtn.className = "removeBtn";
   invRemoveBtn.type = "button";
   invRemoveBtn.dataset.action = "removeInventoryBtn";
-  invRemoveBtn.textContent = "Remove item";
+  invRemoveBtn.textContent = "Del";
+
+  btnGroup.append(editInvBtn, invRemoveBtn);
+
+  invCheck.type = "checkbox";
+  invCheck.checked = data.checked || false;
+
+  const qty = data.quantity || 1;
+  invLi.dataset.quantity = qty;
+  const displayText = qty > 1 ? `${data.text} (qty: ${qty})` : data.text;
+  invLabel.textContent = displayText;
 
   invLabel.prepend(invCheck);
   invDiv.append(invLabel);
-  invLi.append(invDiv, invRemoveBtn);
+  invLi.append(invDiv, btnGroup);
 
   const targetUl = getInvTargetList(data.location, data.sub_location);
   const existingInvLis = Array.from(targetUl.querySelectorAll("li"));
@@ -741,6 +867,7 @@ function createInvLiElement(data, shouldSave = true) {
         {
           profile_name: activeUser,
           text: data.text,
+          quantity: qty,
           checked: data.checked,
           location: data.location,
           sub_location: data.sub_location,
@@ -832,6 +959,7 @@ document.addEventListener("click", async (e) => {
       createInvLiElement(
         {
           text: invValue,
+          quantity: 1,
           checked: false,
           location: selectedLoc.value,
           sub_location: selectedSub.value,
@@ -888,6 +1016,50 @@ document.addEventListener("click", async (e) => {
           console.log("item must be checked before it can be removed.");
         }
       }
+      break;
+    }
+
+    case "editInventoryBtn": {
+      e.preventDefault();
+      const targetInvLi = button.closest("li");
+      if (!targetInvLi) return;
+      const invId = targetInvLi.dataset.id;
+      const currentQty = parseInt(targetInvLi.dataset.quantity || "1", 10);
+      const label = targetInvLi.querySelector("label");
+
+      // Extract raw text by cloning label, removing checkbox, and stripping "(qty: X)"
+      const cloneLabel = label.cloneNode(true);
+      const checkboxInClone = cloneLabel.querySelector("input");
+      if (checkboxInClone) checkboxInClone.remove();
+      let rawText = cloneLabel.textContent.trim();
+      if (currentQty > 1) {
+        rawText = rawText.replace(
+          new RegExp(`\\s*\\(qty:\\s*${currentQty}\\)$`),
+          "",
+        );
+      }
+
+      showEditInventoryDialog(rawText, currentQty).then(async (result) => {
+        if (result) {
+          const newText = result.text;
+          const newQty = result.quantity;
+
+          targetInvLi.dataset.quantity = newQty;
+          const updatedDisplay =
+            newQty > 1 ? `${newText} (qty: ${newQty})` : newText;
+
+          const checkbox = label.querySelector('input[type="checkbox"]');
+          label.textContent = updatedDisplay;
+          if (checkbox) label.prepend(checkbox);
+
+          if (invId) {
+            await window.supabaseClient
+              .from("inventory")
+              .update({ text: newText, quantity: newQty })
+              .eq("id", invId);
+          }
+        }
+      });
       break;
     }
 

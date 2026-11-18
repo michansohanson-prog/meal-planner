@@ -3,10 +3,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Meal Planner</title>
-    <link rel="stylesheet" href="style.css?v=1.22" />
+    <link rel="stylesheet" href="style.css?v=1.24" />
     <!-- Supabase Library CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="main.js?v=1.22" defer></script>
+    <script src="main.js?v=1.24" defer></script>
   </head>
   <body>
     <!-- Login Screen View -->
@@ -241,6 +241,46 @@
         box-sizing: border-box;
       "
     />
+    <div
+      id="modalEditContainer"
+      style="display: none; margin: 15px 0; text-align: left"
+    >
+      <label
+        for="modalEditText"
+        style="font-size: 0.9rem; display: block; margin-bottom: 4px"
+        >Item Text:</label
+      >
+      <input
+        type="text"
+        id="modalEditText"
+        style="
+          width: 100%;
+          font-size: 1rem;
+          padding: 6px;
+          box-sizing: border-box;
+          margin-bottom: 12px;
+        "
+      />
+      <label style="font-size: 0.9rem; display: block; margin-bottom: 4px"
+        >Quantity:</label
+      >
+      <div style="display: flex; align-items: center; gap: 10px">
+        <button type="button" id="modalQtyMinus" class="modal-qty-btn">
+          -
+        </button>
+        <span
+          id="modalQtyDisplay"
+          style="
+            font-size: 1.2rem;
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+          "
+          >1</span
+        >
+        <button type="button" id="modalQtyPlus" class="modal-qty-btn">+</button>
+      </div>
+    </div>
     <div class="modal-buttons">
       <button id="confirmYes" class="removeBtn" type="button">Yes</button>
       <button id="confirmNo" class="removeBtn" type="button">No</button>

@@ -258,9 +258,8 @@ form input:focus {
   box-sizing: border-box;
 }
 
-/* Smooth transitions for shopping and inventory list items without clipping shadows */
-.shopListEntries li,
-.inventoryEntries li {
+/* Smooth transitions for shopping list items */
+.shopListEntries li {
   transition:
     opacity 0.3s ease-in-out,
     transform 0.3s ease-in-out,
@@ -271,6 +270,21 @@ form input:focus {
   align-items: center;
   margin-bottom: 0.5rem;
   padding: 3px 0;
+}
+
+/* Maximized Inventory List Item Spacing & Layout */
+.inventoryEntries li {
+  transition:
+    opacity 0.3s ease-in-out,
+    transform 0.3s ease-in-out,
+    margin 0.3s ease-in-out,
+    padding 0.3s ease-in-out;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.2rem;
+  padding: 1px 0;
+  font-size: 0.95rem;
 }
 
 .fade-out {
@@ -344,22 +358,49 @@ form input:focus {
 .shopListEntries {
   font-size: 1.2rem;
 }
+
+/* Compact Remove Button */
 .removeBtn {
-  padding: 0.2rem 0.6rem;
+  padding: 0.15rem 0.4rem;
   font: inherit;
-  font-size: 0.8rem;
-  border-radius: 2rem;
+  font-size: 0.7rem;
+  border-radius: 1.5rem;
   border: none;
   background: red;
-  box-shadow: 3px 3px 2px black;
+  box-shadow: 2px 2px 2px black;
   cursor: pointer;
+}
+
+/* Edit Button Style (Matches Remove Button but Different Color) */
+.editBtn {
+  padding: 0.15rem 0.4rem;
+  font: inherit;
+  font-size: 0.7rem;
+  border-radius: 1.5rem;
+  border: none;
+  background: rgb(0, 136, 145); /* Teal/Blue-Green accent */
+  box-shadow: 2px 2px 2px black;
+  cursor: pointer;
+  margin-right: 4px;
+}
+
+.inventory-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .inventory {
   border: 1px solid black;
   padding: 1rem;
   border-radius: 2rem;
-  background: linear-gradient(135deg, darkblue, lightblue, darkblue);
+  /* Harmonic Blue Gradient Background for Inventory section */
+  background: linear-gradient(
+    135deg,
+    rgb(20, 30, 80),
+    rgb(70, 130, 180),
+    rgb(20, 30, 80)
+  );
   box-shadow: 8px 8px 16px black;
 }
 
@@ -395,7 +436,7 @@ form input:focus {
   align-self: flex-start;
 }
 .inventoryEntries {
-  font-size: 1.2rem;
+  font-size: 0.95rem;
 }
 
 /* Inventory Form Layout & Categorized List Styling */
@@ -442,33 +483,35 @@ form input:focus {
 }
 
 .inv-main-section {
-  margin-top: 1rem;
-  padding: 0.8rem;
+  margin-top: 0.6rem;
+  padding: 0.5rem 0.8rem;
   background: rgba(0, 0, 30, 0.25);
-  border-radius: 1rem;
+  border-radius: 0.8rem;
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
+/* Maximized Space Header Styling */
 .inv-main-section h3 {
-  font-size: 1.4rem;
+  font-size: 1.15rem;
   border-bottom: 1px solid goldenrod;
-  margin-bottom: 0.5rem;
-  padding-bottom: 0.2rem;
+  margin-bottom: 0.3rem;
+  padding-bottom: 0.1rem;
 }
 
 .inv-sub-section {
-  margin-left: 1rem;
-  margin-top: 0.6rem;
+  margin-left: 0.6rem;
+  margin-top: 0.4rem;
 }
 
+/* Maximized Space Sub-Header Styling */
 .inv-sub-section h4 {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   color: rgb(97, 237, 255);
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.15rem;
 }
 
 .inv-sub-section ul {
-  padding-left: 0.5rem;
+  padding-left: 0.4rem;
 }
 
 #confirmModal {
@@ -538,6 +581,16 @@ form input:focus {
 #confirmNo {
   background-color: #e0e0e0;
   color: #333;
+}
+
+.modal-qty-btn {
+  padding: 6px 12px;
+  font-size: 1rem;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 @media (max-width: 768px) {
