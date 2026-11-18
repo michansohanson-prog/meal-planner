@@ -1,3 +1,4 @@
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -101,14 +102,34 @@
 
         <section class="inventory" id="inventory">
           <h2>Inventory</h2>
-          <form id="inventoryForm">
-            <div class="formrow">
+          <form id="inventoryForm" class="inv-add-card">
+            <div class="inv-input-qty-row">
               <input
                 id="inventoryInput"
                 type="text"
                 placeholder="Whatcha got already?"
                 required
               />
+              <div class="inv-form-qty-group">
+                <span class="group-label">Qty:</span>
+                <button
+                  type="button"
+                  id="invFormQtyMinus"
+                  class="inv-qty-step-btn"
+                  aria-label="Decrease quantity"
+                >
+                  -
+                </button>
+                <span id="invFormQtyDisplay" class="inv-qty-val">1</span>
+                <button
+                  type="button"
+                  id="invFormQtyPlus"
+                  class="inv-qty-step-btn"
+                  aria-label="Increase quantity"
+                >
+                  +
+                </button>
+              </div>
             </div>
 
             <!-- Main Location Selection -->
@@ -243,7 +264,7 @@
     />
     <div
       id="modalEditContainer"
-      style="display: none; margin: 15px 0; text-align: left"
+      style="display: none; margin: 12px 0; text-align: left"
     >
       <label
         for="modalEditText"

@@ -17,6 +17,26 @@ const shopList = document.querySelector(".shopListEntries");
 
 const inventoryInput = document.querySelector("#inventoryInput");
 const inventoryContainer = document.querySelector("#inventoryContainer");
+const invFormQtyMinus = document.querySelector("#invFormQtyMinus");
+const invFormQtyPlus = document.querySelector("#invFormQtyPlus");
+const invFormQtyDisplay = document.querySelector("#invFormQtyDisplay");
+
+let newInvQuantity = 1;
+
+// Add-Inventory Form Quantity Stepper Handlers
+if (invFormQtyMinus && invFormQtyPlus && invFormQtyDisplay) {
+  invFormQtyMinus.addEventListener("click", () => {
+    if (newInvQuantity > 1) {
+      newInvQuantity--;
+      invFormQtyDisplay.textContent = newInvQuantity;
+    }
+  });
+
+  invFormQtyPlus.addEventListener("click", () => {
+    newInvQuantity++;
+    invFormQtyDisplay.textContent = newInvQuantity;
+  });
+}
 
 // Location Radio Toggle References
 const mainLocRadios = document.querySelectorAll('input[name="mainLocation"]');
@@ -264,26 +284,18 @@ function setupRealtimeSync(username) {
           `#inventoryContainer li[data-id="${payload.new.id}"]`,
         );
         if (li) {
-          // Re-render or update text/qty/checked state dynamically
           const checkbox = li.querySelector('input[type="checkbox"]');
           if (checkbox && checkbox.checked !== payload.new.checked) {
             checkbox.checked = payload.new.checked;
           }
           const label = li.querySelector("label");
           const qty = payload.new.quantity || 1;
+          li.dataset.quantity = qty;
           const displayText =
             qty > 1 ? `${payload.new.text} (qty: ${qty})` : payload.new.text;
           if (label) {
-            // Keep checkbox intact, update text node
-            const textNode = Array.from(label.childNodes).find(
-              (n) => n.nodeType === Node.TEXT_NODE,
-            );
-            if (textNode) {
-              textNode.nodeValue = ` ${displayText}`;
-            } else {
-              label.textContent = displayText;
-              label.prepend(checkbox);
-            }
+            label.textContent = displayText;
+            if (checkbox) label.prepend(checkbox);
           }
         }
       },
@@ -409,6 +421,7 @@ function showConfirmDialog(message) {
     // Reset standard modal state
     h3Tag.textContent = "Tasty Planner";
     pTag.textContent = message;
+    pTag.style.display = "block";
     inputField.style.display = "none";
     editContainer.style.display = "none";
     yesBtn.textContent = "Yes";
@@ -959,7 +972,7 @@ document.addEventListener("click", async (e) => {
       createInvLiElement(
         {
           text: invValue,
-          quantity: 1,
+          quantity: newInvQuantity,
           checked: false,
           location: selectedLoc.value,
           sub_location: selectedSub.value,
@@ -968,6 +981,8 @@ document.addEventListener("click", async (e) => {
       );
 
       inventoryInput.value = "";
+      newInvQuantity = 1;
+      if (invFormQtyDisplay) invFormQtyDisplay.textContent = "1";
       break;
     }
 
