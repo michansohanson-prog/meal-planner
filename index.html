@@ -4,10 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Meal Planner</title>
-    <link rel="stylesheet" href="style.css?v=1.30" />
+    <link rel="stylesheet" href="style.css?v=1.31" />
     <!-- Supabase Library CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="main.js?v=1.30" defer></script>
+    <script src="main.js?v=1.31" defer></script>
   </head>
   <body>
     <!-- Login Screen View -->
@@ -330,17 +330,31 @@
       id="modalSendInventoryContainer"
       style="display: none; margin: 12px 0; text-align: left"
     >
-      <p
+      <label
+        for="modalSendItemInput"
         style="
-          font-size: 0.95rem;
+          font-size: 0.9rem;
           font-weight: bold;
-          margin-bottom: 8px;
+          display: block;
+          margin-bottom: 4px;
           color: rgb(97, 237, 255);
         "
       >
-        Send to Inventory:
-        <span id="modalSendItemName" style="color: white"></span>
-      </p>
+        Item Name:
+      </label>
+      <input
+        type="text"
+        id="modalSendItemInput"
+        style="
+          width: 100%;
+          font-size: 1rem;
+          padding: 6px;
+          box-sizing: border-box;
+          margin-bottom: 10px;
+          border-radius: 0.5rem;
+          border: none;
+        "
+      />
 
       <!-- Modal Quantity Row -->
       <div

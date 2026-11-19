@@ -330,7 +330,6 @@ function setupRealtimeSync(username) {
             checkbox.checked = payload.new.checked;
           }
           const label = li.querySelector("label");
-          // Preserve existing quantity/text if omitted from realtime update payload
           const qty =
             payload.new.quantity !== undefined && payload.new.quantity !== null
               ? payload.new.quantity
@@ -403,7 +402,6 @@ function setupRealtimeSync(username) {
             checkbox.checked = payload.new.checked;
           }
           const label = li.querySelector("label");
-          // Preserve existing quantity/text if omitted from realtime update payload
           const qty =
             payload.new.quantity !== undefined && payload.new.quantity !== null
               ? payload.new.quantity
@@ -578,7 +576,7 @@ function showConfirmDialog(message) {
   });
 }
 
-// Helper function to handle inventory edit modal popup
+// Helper function to handle inventory / shopping edit modal popup
 function showEditInventoryDialog(currentText, currentQty) {
   return new Promise((resolve) => {
     const dialog = document.querySelector("#confirmModal");
@@ -680,14 +678,21 @@ function showSendToInventoryDialog(itemText, initialQty) {
     const sendInvContainer = document.querySelector(
       "#modalSendInventoryContainer",
     );
-    const itemNameSpan = document.querySelector("#modalSendItemName");
+    const sendItemInput = document.querySelector("#modalSendItemInput");
     const yesBtn = document.querySelector("#confirmYes");
     const noBtn = document.querySelector("#confirmNo");
 
     if (!dialog) {
+      const text = window.prompt("Item name:", itemText);
+      if (text === null) return resolve(null);
       const location = window.prompt("Location (Kitchen or Downstairs):");
       const sub = window.prompt("Sub-location:");
-      resolve({ location, sub_location: sub, quantity: initialQty });
+      resolve({
+        text: text.trim() || itemText,
+        location,
+        sub_location: sub,
+        quantity: initialQty,
+      });
       return;
     }
 
@@ -697,9 +702,8 @@ function showSendToInventoryDialog(itemText, initialQty) {
     inputField.style.display = "none";
     editContainer.style.display = "none";
     sendInvContainer.style.display = "block";
-    itemNameSpan.textContent = itemText;
 
-    // Set auto-populated quantity
+    sendItemInput.value = itemText;
     modalSendQuantity = initialQty || 1;
     modalSendQtyDisplay.textContent = modalSendQuantity;
 
@@ -726,8 +730,16 @@ function showSendToInventoryDialog(itemText, initialQty) {
     noBtn.style.display = "inline-block";
 
     dialog.showModal();
+    sendItemInput.focus();
 
     const handleYes = () => {
+      const updatedText = sendItemInput.value.trim();
+      if (!updatedText) {
+        alert("Please enter an item name.");
+        sendItemInput.focus();
+        return;
+      }
+
       const selectedLoc = document.querySelector(
         'input[name="modalMainLocation"]:checked',
       );
@@ -754,6 +766,7 @@ function showSendToInventoryDialog(itemText, initialQty) {
 
       cleanup();
       resolve({
+        text: updatedText,
         location: selectedLoc.value,
         sub_location: selectedSub.value,
         quantity: modalSendQuantity,
@@ -810,7 +823,7 @@ function showDeleteProfileDialog(targetProfileName) {
     yesBtn.textContent = "Del";
     noBtn.textContent = "Cancel";
     yesBtn.style.display = "inline-block";
-    yesBtn.style.display = "inline-block";
+    noBtn.style.display = "inline-block";
 
     dialog.showModal();
     inputField.focus();
@@ -955,7 +968,7 @@ function createMealCardElement(data, shouldSave = true) {
   }
 }
 
-function createShopLiElement(data, shouldSave = true) {
+async function createShopLiElement(data, shouldSave = true) {
   const shopLi = document.createElement("li");
   shopLi.dataset.id = data.id || "";
   if (!shouldSave) {
@@ -974,7 +987,7 @@ function createShopLiElement(data, shouldSave = true) {
   invTransferBtn.type = "button";
   invTransferBtn.dataset.action = "sendToInventoryBtn";
   invTransferBtn.textContent = "Inv";
-  invTransferBtn.disabled = !data.checked; // Only enabled if checked
+  invTransferBtn.disabled = !data.checked;
 
   const editShopBtn = document.createElement("button");
   editShopBtn.className = "editBtn";
@@ -1031,35 +1044,44 @@ function createShopLiElement(data, shouldSave = true) {
   shopCheck.addEventListener("change", async () => {
     invTransferBtn.disabled = !shopCheck.checked;
     if (shopLi.dataset.id) {
-      await window.supabaseClient
+      const { error } = await window.supabaseClient
         .from("shopping_list")
         .update({ checked: shopCheck.checked })
         .eq("id", shopLi.dataset.id);
+      if (error)
+        console.error("Error updating shopping item checked state:", error);
     }
   });
 
   if (shouldSave) {
     const activeUser = localStorage.getItem("tasty_active_user");
-    window.supabaseClient
+    const { data: insertedData, error } = await window.supabaseClient
       .from("shopping_list")
       .insert([
         {
           profile_name: activeUser,
           text: data.text,
           quantity: qty,
-          checked: data.checked,
+          checked: Boolean(data.checked),
         },
       ])
       .select()
-      .then(({ data: insertedData }) => {
-        if (insertedData && insertedData[0]) {
-          shopLi.dataset.id = insertedData[0].id;
-        }
-      });
+      .single();
+
+    if (error) {
+      console.error("Error saving shopping list item:", error);
+      return shopLi;
+    }
+
+    if (insertedData && insertedData.id) {
+      shopLi.dataset.id = insertedData.id;
+    }
   }
+
+  return shopLi;
 }
 
-function createInvLiElement(data, shouldSave = true) {
+async function createInvLiElement(data, shouldSave = true) {
   const invLi = document.createElement("li");
   invLi.dataset.id = data.id || "";
   if (!shouldSave) {
@@ -1128,34 +1150,43 @@ function createInvLiElement(data, shouldSave = true) {
 
   invCheck.addEventListener("change", async () => {
     if (invLi.dataset.id) {
-      await window.supabaseClient
+      const { error } = await window.supabaseClient
         .from("inventory")
         .update({ checked: invCheck.checked })
         .eq("id", invLi.dataset.id);
+      if (error)
+        console.error("Error updating inventory checked state:", error);
     }
   });
 
   if (shouldSave) {
     const activeUser = localStorage.getItem("tasty_active_user");
-    window.supabaseClient
+    const { data: insertedData, error } = await window.supabaseClient
       .from("inventory")
       .insert([
         {
           profile_name: activeUser,
           text: data.text,
           quantity: qty,
-          checked: data.checked,
+          checked: Boolean(data.checked),
           location: data.location,
           sub_location: data.sub_location,
         },
       ])
       .select()
-      .then(({ data: insertedData }) => {
-        if (insertedData && insertedData[0]) {
-          invLi.dataset.id = insertedData[0].id;
-        }
-      });
+      .single();
+
+    if (error) {
+      console.error("Error saving inventory item:", error);
+      return invLi;
+    }
+
+    if (insertedData && insertedData.id) {
+      invLi.dataset.id = insertedData.id;
+    }
   }
+
+  return invLi;
 }
 
 // Global click listener on document
@@ -1198,13 +1229,15 @@ document.addEventListener("click", async (e) => {
       const shopValue = shopInput.value.trim();
       if (!shopValue) return;
 
-      createShopLiElement(
-        { text: shopValue, quantity: newShopQuantity, checked: false },
-        true,
-      );
+      const qtyToAdd = newShopQuantity;
       shopInput.value = "";
       newShopQuantity = 1;
       if (shopFormQtyDisplay) shopFormQtyDisplay.textContent = "1";
+
+      await createShopLiElement(
+        { text: shopValue, quantity: qtyToAdd, checked: false },
+        true,
+      );
       break;
     }
 
@@ -1237,20 +1270,21 @@ document.addEventListener("click", async (e) => {
         return;
       }
 
-      createInvLiElement(
+      const qtyToAdd = newInvQuantity;
+      inventoryInput.value = "";
+      newInvQuantity = 1;
+      if (invFormQtyDisplay) invFormQtyDisplay.textContent = "1";
+
+      await createInvLiElement(
         {
           text: invValue,
-          quantity: newInvQuantity,
+          quantity: qtyToAdd,
           checked: false,
           location: selectedLoc.value,
           sub_location: selectedSub.value,
         },
         true,
       );
-
-      inventoryInput.value = "";
-      newInvQuantity = 1;
-      if (invFormQtyDisplay) invFormQtyDisplay.textContent = "1";
       break;
     }
 
@@ -1263,20 +1297,16 @@ document.addEventListener("click", async (e) => {
           ? mealTitleElement.textContent
           : "this meal";
 
-        showConfirmDialog(`Remove this Tasty Meal? (${mealName})`).then(
-          async (confirmed) => {
-            if (confirmed) {
-              const mealId = mealCardToRemove.dataset.id;
-              if (mealId) {
-                await window.supabaseClient
-                  .from("meals")
-                  .delete()
-                  .eq("id", mealId);
-              }
-              smoothRemove(mealCardToRemove);
-            }
-          },
+        const confirmed = await showConfirmDialog(
+          `Remove this Tasty Meal? (${mealName})`,
         );
+        if (confirmed) {
+          const mealId = mealCardToRemove.dataset.id;
+          if (mealId) {
+            await window.supabaseClient.from("meals").delete().eq("id", mealId);
+          }
+          smoothRemove(mealCardToRemove);
+        }
       }
       break;
     }
@@ -1289,10 +1319,11 @@ document.addEventListener("click", async (e) => {
         if (checkbox && checkbox.checked) {
           const shopId = targetShopLi.dataset.id;
           if (shopId) {
-            await window.supabaseClient
+            const { error } = await window.supabaseClient
               .from("shopping_list")
               .delete()
               .eq("id", shopId);
+            if (error) console.error("Error deleting shopping item:", error);
           }
           smoothRemove(targetShopLi);
         } else {
@@ -1317,23 +1348,23 @@ document.addEventListener("click", async (e) => {
       if (qtySpanInClone) qtySpanInClone.remove();
       const rawText = cloneLabel.textContent.trim();
 
-      showEditInventoryDialog(rawText, currentQty).then(async (result) => {
-        if (result) {
-          const newText = result.text;
-          const newQty = result.quantity;
+      const result = await showEditInventoryDialog(rawText, currentQty);
+      if (result) {
+        const newText = result.text;
+        const newQty = result.quantity;
 
-          targetShopLi.dataset.quantity = newQty;
-          const checkbox = label.querySelector('input[type="checkbox"]');
-          setInventoryLabelContent(label, checkbox, newText, newQty);
+        targetShopLi.dataset.quantity = newQty;
+        const checkbox = label.querySelector('input[type="checkbox"]');
+        setInventoryLabelContent(label, checkbox, newText, newQty);
 
-          if (shopId) {
-            await window.supabaseClient
-              .from("shopping_list")
-              .update({ text: newText, quantity: newQty })
-              .eq("id", shopId);
-          }
+        if (shopId) {
+          const { error } = await window.supabaseClient
+            .from("shopping_list")
+            .update({ text: newText, quantity: newQty })
+            .eq("id", shopId);
+          if (error) console.error("Error updating shopping item:", error);
         }
-      });
+      }
       break;
     }
 
@@ -1354,31 +1385,31 @@ document.addEventListener("click", async (e) => {
       if (qtySpanInClone) qtySpanInClone.remove();
       const rawText = cloneLabel.textContent.trim();
 
-      showSendToInventoryDialog(rawText, currentQty).then(async (locResult) => {
-        if (locResult) {
-          // Add to inventory with quantity chosen in popup
-          createInvLiElement(
-            {
-              text: rawText,
-              quantity: locResult.quantity,
-              checked: false,
-              location: locResult.location,
-              sub_location: locResult.sub_location,
-            },
-            true,
-          );
+      const locResult = await showSendToInventoryDialog(rawText, currentQty);
+      if (locResult) {
+        await createInvLiElement(
+          {
+            text: locResult.text,
+            quantity: locResult.quantity,
+            checked: false,
+            location: locResult.location,
+            sub_location: locResult.sub_location,
+          },
+          true,
+        );
 
-          // Remove from shopping list
-          const shopId = targetShopLi.dataset.id;
-          if (shopId) {
-            await window.supabaseClient
-              .from("shopping_list")
-              .delete()
-              .eq("id", shopId);
+        const shopId = targetShopLi.dataset.id;
+        if (shopId) {
+          const { error } = await window.supabaseClient
+            .from("shopping_list")
+            .delete()
+            .eq("id", shopId);
+          if (error) {
+            console.error("Error deleting transferred shopping item:", error);
           }
-          smoothRemove(targetShopLi);
         }
-      });
+        smoothRemove(targetShopLi);
+      }
       break;
     }
 
@@ -1390,7 +1421,6 @@ document.addEventListener("click", async (e) => {
       const currentQty = parseInt(targetInvLi.dataset.quantity || "1", 10);
       const label = targetInvLi.querySelector("label");
 
-      // Extract raw text by cloning label, removing checkbox/qty span
       const cloneLabel = label.cloneNode(true);
       const checkboxInClone = cloneLabel.querySelector("input");
       if (checkboxInClone) checkboxInClone.remove();
@@ -1398,23 +1428,23 @@ document.addEventListener("click", async (e) => {
       if (qtySpanInClone) qtySpanInClone.remove();
       const rawText = cloneLabel.textContent.trim();
 
-      showEditInventoryDialog(rawText, currentQty).then(async (result) => {
-        if (result) {
-          const newText = result.text;
-          const newQty = result.quantity;
+      const result = await showEditInventoryDialog(rawText, currentQty);
+      if (result) {
+        const newText = result.text;
+        const newQty = result.quantity;
 
-          targetInvLi.dataset.quantity = newQty;
-          const checkbox = label.querySelector('input[type="checkbox"]');
-          setInventoryLabelContent(label, checkbox, newText, newQty);
+        targetInvLi.dataset.quantity = newQty;
+        const checkbox = label.querySelector('input[type="checkbox"]');
+        setInventoryLabelContent(label, checkbox, newText, newQty);
 
-          if (invId) {
-            await window.supabaseClient
-              .from("inventory")
-              .update({ text: newText, quantity: newQty })
-              .eq("id", invId);
-          }
+        if (invId) {
+          const { error } = await window.supabaseClient
+            .from("inventory")
+            .update({ text: newText, quantity: newQty })
+            .eq("id", invId);
+          if (error) console.error("Error updating inventory item:", error);
         }
-      });
+      }
       break;
     }
 
@@ -1426,10 +1456,11 @@ document.addEventListener("click", async (e) => {
         if (checkbox && checkbox.checked) {
           const invId = targetInvLi.dataset.id;
           if (invId) {
-            await window.supabaseClient
+            const { error } = await window.supabaseClient
               .from("inventory")
               .delete()
               .eq("id", invId);
+            if (error) console.error("Error deleting inventory item:", error);
           }
           smoothRemove(targetInvLi);
         } else {
@@ -1443,33 +1474,30 @@ document.addEventListener("click", async (e) => {
       e.preventDefault();
       const profileName = button.dataset.name;
 
-      showDeleteProfileDialog(profileName).then(async (confirmed) => {
-        if (confirmed) {
-          await window.supabaseClient
-            .from("profiles")
-            .delete()
-            .eq("name", profileName);
-          await window.supabaseClient
-            .from("meals")
-            .delete()
-            .eq("profile_name", profileName);
-          await window.supabaseClient
-            .from("shopping_list")
-            .delete()
-            .eq("profile_name", profileName);
-          await window.supabaseClient
-            .from("inventory")
-            .delete()
-            .eq("profile_name", profileName);
+      const confirmed = await showDeleteProfileDialog(profileName);
+      if (confirmed) {
+        await window.supabaseClient
+          .from("profiles")
+          .delete()
+          .eq("name", profileName);
+        await window.supabaseClient
+          .from("meals")
+          .delete()
+          .eq("profile_name", profileName);
+        await window.supabaseClient
+          .from("shopping_list")
+          .delete()
+          .eq("profile_name", profileName);
+        await window.supabaseClient
+          .from("inventory")
+          .delete()
+          .eq("profile_name", profileName);
 
-          if (localStorage.getItem("tasty_active_user") === profileName) {
-            localStorage.removeItem("tasty_active_user");
-          }
-          checkSession();
-        } else {
-          checkSession();
+        if (localStorage.getItem("tasty_active_user") === profileName) {
+          localStorage.removeItem("tasty_active_user");
         }
-      });
+      }
+      checkSession();
       break;
     }
   }
