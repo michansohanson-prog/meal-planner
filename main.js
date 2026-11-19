@@ -542,7 +542,7 @@ function showConfirmDialog(message) {
       return;
     }
 
-    h3Tag.textContent = "Tasty Planner";
+    h3Tag.textContent = "Yummy Food";
     pTag.textContent = message;
     pTag.style.display = "block";
     inputField.style.display = "none";
@@ -834,7 +834,7 @@ function showDeleteProfileDialog(targetProfileName) {
         cleanup();
         resolve(true);
       } else {
-        h3Tag.textContent = "Tasty Planner";
+        h3Tag.textContent = "Yummy Food";
         pTag.textContent = "Profile name didn't match.";
         inputField.style.display = "none";
         yesBtn.style.display = "none";
