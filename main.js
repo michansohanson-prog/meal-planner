@@ -259,6 +259,76 @@ function setInventoryLabelContent(label, checkbox, text, qty) {
   if (checkbox) label.prepend(checkbox);
 }
 
+// Helper to normalize meal fields consistently
+function normalizeMealData(raw) {
+  const name = (raw.name || "").trim();
+  const rawDate = (raw.date || "").trim();
+  const isValidDate =
+    rawDate !== "" && rawDate !== "Pending" && !isNaN(Date.parse(rawDate));
+  const date = isValidDate ? rawDate : "Pending";
+
+  const rawDesc = (raw.description || "").trim();
+  const description = rawDesc !== "" ? rawDesc : "Mystery food?";
+
+  const rawLink = (raw.link || "").trim();
+  const link =
+    rawLink !== ""
+      ? rawLink
+      : "https://michansohanson-prog.github.io/odin-recipes/";
+
+  return { name, date, description, link };
+}
+
+// Helper to apply updated fields and re-sort a meal card in the DOM
+function applyMealCardUpdate(mealCard, data) {
+  const mealTitle = mealCard.querySelector("h2");
+  const mealDateP = mealCard.querySelector(".date");
+  const mealDescP = mealCard.querySelector(".meal-description");
+  const recipeLink = mealCard.querySelector("a");
+
+  if (mealTitle) mealTitle.textContent = data.name;
+  if (mealDateP) mealDateP.textContent = data.date;
+  if (mealDescP) mealDescP.textContent = data.description;
+  if (recipeLink) {
+    recipeLink.href = data.link;
+    recipeLink.textContent = data.link.includes("odin-recipes")
+      ? "Recipe Website"
+      : "Link to Recipe";
+  }
+
+  mealCard.remove();
+  insertMealCardSorted(mealCard, data.date);
+}
+
+function insertMealCardSorted(mealCard, dateStr) {
+  const dateValue = dateStr === "Pending" ? "" : dateStr;
+  const isValidDate = dateValue !== "" && !isNaN(Date.parse(dateValue));
+  const cardTimestamp = isValidDate ? Date.parse(dateValue) : Infinity;
+  const existingMealCards = Array.from(
+    mealsContainer.querySelectorAll(".meal-card"),
+  );
+  let mealInserted = false;
+
+  for (const existingCard of existingMealCards) {
+    const dateP = existingCard.querySelector(".date");
+    const dateText = dateP ? dateP.textContent.trim() : "";
+    const existingTime =
+      dateText !== "" && dateText !== "Pending" && !isNaN(Date.parse(dateText))
+        ? Date.parse(dateText)
+        : Infinity;
+
+    if (cardTimestamp < existingTime) {
+      mealsContainer.insertBefore(mealCard, existingCard);
+      mealInserted = true;
+      break;
+    }
+  }
+
+  if (!mealInserted) {
+    mealsContainer.append(mealCard);
+  }
+}
+
 // Realtime sync listener with surgical element patching and smooth animations
 function setupRealtimeSync(username) {
   if (realtimeChannel) window.supabaseClient.removeChannel(realtimeChannel);
@@ -278,6 +348,23 @@ function setupRealtimeSync(username) {
           !document.querySelector(`.meal-card[data-id="${payload.new.id}"]`)
         ) {
           createMealCardElement(payload.new, false);
+        }
+      },
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "meals",
+      },
+      (payload) => {
+        const card = document.querySelector(
+          `.meal-card[data-id="${payload.new.id}"]`,
+        );
+        if (card) {
+          const normalized = normalizeMealData(payload.new);
+          applyMealCardUpdate(card, normalized);
         }
       },
     )
@@ -523,6 +610,112 @@ if (homeLink) {
 
 checkSession();
 
+// Helper function to handle editing a meal modal popup
+function showEditMealDialog(currentMeal) {
+  return new Promise((resolve) => {
+    const dialog = document.querySelector("#confirmModal");
+    const h3Tag = dialog.querySelector("h3");
+    const pTag = dialog.querySelector("p");
+    const inputField = document.querySelector("#confirmNameInput");
+    const editMealContainer = document.querySelector("#modalEditMealContainer");
+    const editContainer = document.querySelector("#modalEditContainer");
+    const sendInvContainer = document.querySelector(
+      "#modalSendInventoryContainer",
+    );
+    const nameInput = document.querySelector("#modalMealName");
+    const dateInput = document.querySelector("#modalMealDate");
+    const descInput = document.querySelector("#modalMealDesc");
+    const linkInput = document.querySelector("#modalMealLink");
+    const yesBtn = document.querySelector("#confirmYes");
+    const noBtn = document.querySelector("#confirmNo");
+
+    if (!dialog || !editMealContainer) {
+      const name = window.prompt("Meal name:", currentMeal.name);
+      if (name === null) return resolve(null);
+      const date = window.prompt("Date:", currentMeal.date);
+      const description = window.prompt(
+        "What's it like?",
+        currentMeal.description,
+      );
+      const link = window.prompt("Link to recipe:", currentMeal.link);
+      resolve(
+        normalizeMealData({
+          name: name.trim() || currentMeal.name,
+          date,
+          description,
+          link,
+        }),
+      );
+      return;
+    }
+
+    h3Tag.textContent = "Edit Meal";
+    pTag.textContent = "";
+    pTag.style.display = "none";
+    inputField.style.display = "none";
+    editContainer.style.display = "none";
+    sendInvContainer.style.display = "none";
+    editMealContainer.style.display = "block";
+
+    nameInput.value = currentMeal.name || "";
+    const parsedDate =
+      currentMeal.date &&
+      currentMeal.date !== "Pending" &&
+      !isNaN(Date.parse(currentMeal.date))
+        ? new Date(Date.parse(currentMeal.date)).toISOString().slice(0, 10)
+        : "";
+    dateInput.value = parsedDate;
+    descInput.value =
+      currentMeal.description && currentMeal.description !== "Mystery food?"
+        ? currentMeal.description
+        : "";
+    linkInput.value = currentMeal.link || "";
+
+    yesBtn.textContent = "Save";
+    noBtn.textContent = "Cancel";
+    yesBtn.style.display = "inline-block";
+    noBtn.style.display = "inline-block";
+
+    dialog.showModal();
+    nameInput.focus();
+
+    const handleSave = () => {
+      const updatedName = nameInput.value.trim();
+      if (!updatedName) {
+        alert("Please enter a meal name.");
+        nameInput.focus();
+        return;
+      }
+
+      const normalized = normalizeMealData({
+        name: updatedName,
+        date: dateInput.value,
+        description: descInput.value,
+        link: linkInput.value,
+      });
+
+      cleanup();
+      resolve(normalized);
+    };
+
+    const handleCancel = () => {
+      cleanup();
+      resolve(null);
+    };
+
+    const cleanup = () => {
+      dialog.close();
+      pTag.style.display = "block";
+      editMealContainer.style.display = "none";
+      yesBtn.removeEventListener("click", handleSave);
+      noBtn.removeEventListener("click", handleCancel);
+    };
+
+    yesBtn.addEventListener("click", handleSave);
+    noBtn.addEventListener("click", handleCancel);
+  });
+}
+
 // Helper function to handle the standard custom <dialog> confirmation modal
 function showConfirmDialog(message) {
   return new Promise((resolve) => {
@@ -530,6 +723,7 @@ function showConfirmDialog(message) {
     const h3Tag = dialog.querySelector("h3");
     const pTag = dialog.querySelector("p");
     const inputField = document.querySelector("#confirmNameInput");
+    const editMealContainer = document.querySelector("#modalEditMealContainer");
     const editContainer = document.querySelector("#modalEditContainer");
     const sendInvContainer = document.querySelector(
       "#modalSendInventoryContainer",
@@ -546,6 +740,7 @@ function showConfirmDialog(message) {
     pTag.textContent = message;
     pTag.style.display = "block";
     inputField.style.display = "none";
+    if (editMealContainer) editMealContainer.style.display = "none";
     editContainer.style.display = "none";
     sendInvContainer.style.display = "none";
     yesBtn.textContent = "Yes";
@@ -583,6 +778,7 @@ function showEditInventoryDialog(currentText, currentQty) {
     const h3Tag = dialog.querySelector("h3");
     const pTag = dialog.querySelector("p");
     const inputField = document.querySelector("#confirmNameInput");
+    const editMealContainer = document.querySelector("#modalEditMealContainer");
     const editContainer = document.querySelector("#modalEditContainer");
     const sendInvContainer = document.querySelector(
       "#modalSendInventoryContainer",
@@ -610,6 +806,7 @@ function showEditInventoryDialog(currentText, currentQty) {
     pTag.textContent = "";
     pTag.style.display = "none";
     inputField.style.display = "none";
+    if (editMealContainer) editMealContainer.style.display = "none";
     sendInvContainer.style.display = "none";
     editContainer.style.display = "block";
 
@@ -674,6 +871,7 @@ function showSendToInventoryDialog(itemText, initialQty) {
     const h3Tag = dialog.querySelector("h3");
     const pTag = dialog.querySelector("p");
     const inputField = document.querySelector("#confirmNameInput");
+    const editMealContainer = document.querySelector("#modalEditMealContainer");
     const editContainer = document.querySelector("#modalEditContainer");
     const sendInvContainer = document.querySelector(
       "#modalSendInventoryContainer",
@@ -700,6 +898,7 @@ function showSendToInventoryDialog(itemText, initialQty) {
     pTag.textContent = "";
     pTag.style.display = "none";
     inputField.style.display = "none";
+    if (editMealContainer) editMealContainer.style.display = "none";
     editContainer.style.display = "none";
     sendInvContainer.style.display = "block";
 
@@ -798,6 +997,7 @@ function showDeleteProfileDialog(targetProfileName) {
     const h3Tag = dialog.querySelector("h3");
     const pTag = dialog.querySelector("p");
     const inputField = document.querySelector("#confirmNameInput");
+    const editMealContainer = document.querySelector("#modalEditMealContainer");
     const editContainer = document.querySelector("#modalEditContainer");
     const sendInvContainer = document.querySelector(
       "#modalSendInventoryContainer",
@@ -816,6 +1016,7 @@ function showDeleteProfileDialog(targetProfileName) {
     h3Tag.textContent = "Delete Profile?";
     pTag.textContent = "Type the exact profile name to delete.";
     pTag.style.display = "block";
+    if (editMealContainer) editMealContainer.style.display = "none";
     editContainer.style.display = "none";
     sendInvContainer.style.display = "none";
     inputField.style.display = "block";
@@ -877,6 +1078,7 @@ function smoothRemove(element) {
 
 // Element Creators with smooth mobile fade-in
 function createMealCardElement(data, shouldSave = true) {
+  const normalized = normalizeMealData(data);
   const mealCard = document.createElement("div");
   mealCard.classList.add("meal-card");
   mealCard.dataset.id = data.id || "";
@@ -886,59 +1088,42 @@ function createMealCardElement(data, shouldSave = true) {
   }
 
   const mealTitle = document.createElement("h2");
-  mealTitle.textContent = data.name;
+  mealTitle.textContent = normalized.name;
 
   const mealDateP = document.createElement("p");
   mealDateP.classList.add("date");
-  mealDateP.textContent = data.date;
+  mealDateP.textContent = normalized.date;
 
   const mealDescP = document.createElement("p");
   mealDescP.classList.add("meal-description");
-  mealDescP.textContent = data.description;
+  mealDescP.textContent = normalized.description;
 
   const recipeLink = document.createElement("a");
-  recipeLink.href = data.link;
+  recipeLink.href = normalized.link;
   recipeLink.target = "_blank";
-  recipeLink.textContent = data.link.includes("odin-recipes")
+  recipeLink.textContent = normalized.link.includes("odin-recipes")
     ? "Recipe Website"
     : "Link to Recipe";
 
   const btnWrapper = document.createElement("div");
+  btnWrapper.className = "meal-btn-group";
+
+  const editMealBtn = document.createElement("button");
+  editMealBtn.className = "editBtn";
+  editMealBtn.type = "button";
+  editMealBtn.dataset.action = "editMealBtn";
+  editMealBtn.textContent = "Edit";
+
   const removeMealBtn = document.createElement("button");
-  removeMealBtn.classList.add("removeBtn");
+  removeMealBtn.className = "removeBtn";
   removeMealBtn.type = "button";
   removeMealBtn.dataset.action = "removeMealBtn";
   removeMealBtn.textContent = "Del";
 
-  btnWrapper.append(removeMealBtn);
+  btnWrapper.append(editMealBtn, removeMealBtn);
   mealCard.append(mealTitle, mealDateP, mealDescP, recipeLink, btnWrapper);
 
-  const dateValue = data.date === "Pending" ? "" : data.date;
-  const isValidDate = dateValue !== "" && !isNaN(Date.parse(dateValue));
-  const cardTimestamp = isValidDate ? Date.parse(dateValue) : Infinity;
-  const existingMealCards = Array.from(
-    mealsContainer.querySelectorAll(".meal-card"),
-  );
-  let mealInserted = false;
-
-  for (const existingCard of existingMealCards) {
-    const dateP = existingCard.querySelector(".date");
-    const dateText = dateP ? dateP.textContent.trim() : "";
-    const existingTime =
-      dateText !== "" && dateText !== "Pending" && !isNaN(Date.parse(dateText))
-        ? Date.parse(dateText)
-        : Infinity;
-
-    if (cardTimestamp < existingTime) {
-      mealsContainer.insertBefore(mealCard, existingCard);
-      mealInserted = true;
-      break;
-    }
-  }
-
-  if (!mealInserted) {
-    mealsContainer.append(mealCard);
-  }
+  insertMealCardSorted(mealCard, normalized.date);
 
   if (!shouldSave) {
     requestAnimationFrame(() => {
@@ -953,14 +1138,18 @@ function createMealCardElement(data, shouldSave = true) {
       .insert([
         {
           profile_name: activeUser,
-          name: data.name,
-          date: data.date,
-          description: data.description,
-          link: data.link,
+          name: normalized.name,
+          date: normalized.date,
+          description: normalized.description,
+          link: normalized.link,
         },
       ])
       .select()
-      .then(({ data: insertedData }) => {
+      .then(({ data: insertedData, error }) => {
+        if (error) {
+          console.error("Error saving meal:", error);
+          return;
+        }
         if (insertedData && insertedData[0]) {
           mealCard.dataset.id = insertedData[0].id;
         }
@@ -1200,27 +1389,57 @@ document.addEventListener("click", async (e) => {
       e.preventDefault();
       if (!mealNameInput.value.trim()) return;
 
-      const name = mealNameInput.value.trim();
-      const dateVal = mealDateInput.value.trim();
-      const isValidDate = dateVal !== "" && !isNaN(Date.parse(dateVal));
-      const dateText = isValidDate ? dateVal : "Pending";
-      const descVal = mealDescInput.value.trim();
-      const descText = descVal !== "" ? descVal : "Mystery food?";
-      const linkVal = mealLinkInput.value.trim();
-      const linkText =
-        linkVal !== ""
-          ? linkVal
-          : "https://michansohanson-prog.github.io/odin-recipes/";
+      const normalized = normalizeMealData({
+        name: mealNameInput.value,
+        date: mealDateInput.value,
+        description: mealDescInput.value,
+        link: mealLinkInput.value,
+      });
 
-      createMealCardElement(
-        { name, date: dateText, description: descText, link: linkText },
-        true,
-      );
+      createMealCardElement(normalized, true);
 
       mealNameInput.value = "";
       mealDateInput.value = "";
       mealDescInput.value = "";
       mealLinkInput.value = "";
+      break;
+    }
+
+    case "editMealBtn": {
+      e.preventDefault();
+      const mealCardToEdit = button.closest(".meal-card");
+      if (!mealCardToEdit) return;
+
+      const mealId = mealCardToEdit.dataset.id;
+      const currentMeal = {
+        name: mealCardToEdit.querySelector("h2")?.textContent.trim() || "",
+        date:
+          mealCardToEdit.querySelector(".date")?.textContent.trim() ||
+          "Pending",
+        description:
+          mealCardToEdit
+            .querySelector(".meal-description")
+            ?.textContent.trim() || "Mystery food?",
+        link: mealCardToEdit.querySelector("a")?.href || "",
+      };
+
+      const updatedMeal = await showEditMealDialog(currentMeal);
+      if (updatedMeal) {
+        applyMealCardUpdate(mealCardToEdit, updatedMeal);
+
+        if (mealId) {
+          const { error } = await window.supabaseClient
+            .from("meals")
+            .update({
+              name: updatedMeal.name,
+              date: updatedMeal.date,
+              description: updatedMeal.description,
+              link: updatedMeal.link,
+            })
+            .eq("id", mealId);
+          if (error) console.error("Error updating meal:", error);
+        }
+      }
       break;
     }
 

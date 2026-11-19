@@ -4,10 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Meal Planner</title>
-    <link rel="stylesheet" href="style.css?v=1.32" />
+    <link rel="stylesheet" href="style.css?v=1.34" />
     <!-- Supabase Library CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="main.js?v=1.32" defer></script>
+    <script src="main.js?v=1.34" defer></script>
   </head>
   <body>
     <!-- Login Screen View -->
@@ -269,7 +269,7 @@
     </div>
   </body>
   <dialog id="confirmModal">
-    <h3>Tasty Planner</h3>
+    <h3>Yummy Food</h3>
     <p>Remove this Tasty Meal?</p>
     <input
       type="text"
@@ -285,6 +285,111 @@
         box-sizing: border-box;
       "
     />
+    <!-- Edit Meal Modal Container -->
+    <div
+      id="modalEditMealContainer"
+      style="display: none; margin: 12px 0; text-align: left"
+    >
+      <label
+        for="modalMealName"
+        style="
+          font-size: 0.9rem;
+          font-weight: bold;
+          display: block;
+          margin-bottom: 4px;
+          color: rgb(97, 237, 255);
+        "
+        >Meal Name:</label
+      >
+      <input
+        type="text"
+        id="modalMealName"
+        placeholder="What's for Dinner?"
+        style="
+          width: 100%;
+          font-size: 1rem;
+          padding: 6px;
+          box-sizing: border-box;
+          margin-bottom: 10px;
+          border-radius: 0.5rem;
+          border: none;
+        "
+      />
+      <label
+        for="modalMealDate"
+        style="
+          font-size: 0.9rem;
+          font-weight: bold;
+          display: block;
+          margin-bottom: 4px;
+          color: rgb(97, 237, 255);
+        "
+        >Date:</label
+      >
+      <input
+        type="date"
+        id="modalMealDate"
+        style="
+          width: 100%;
+          font-size: 1rem;
+          padding: 6px;
+          box-sizing: border-box;
+          margin-bottom: 10px;
+          border-radius: 0.5rem;
+          border: none;
+        "
+      />
+      <label
+        for="modalMealDesc"
+        style="
+          font-size: 0.9rem;
+          font-weight: bold;
+          display: block;
+          margin-bottom: 4px;
+          color: rgb(97, 237, 255);
+        "
+        >What's it like?</label
+      >
+      <input
+        type="text"
+        id="modalMealDesc"
+        placeholder="Is it...tasty?"
+        style="
+          width: 100%;
+          font-size: 1rem;
+          padding: 6px;
+          box-sizing: border-box;
+          margin-bottom: 10px;
+          border-radius: 0.5rem;
+          border: none;
+        "
+      />
+      <label
+        for="modalMealLink"
+        style="
+          font-size: 0.9rem;
+          font-weight: bold;
+          display: block;
+          margin-bottom: 4px;
+          color: rgb(97, 237, 255);
+        "
+        >Link to recipe:</label
+      >
+      <input
+        type="url"
+        id="modalMealLink"
+        placeholder="https://..."
+        style="
+          width: 100%;
+          font-size: 1rem;
+          padding: 6px;
+          box-sizing: border-box;
+          margin-bottom: 6px;
+          border-radius: 0.5rem;
+          border: none;
+        "
+      />
+    </div>
     <div
       id="modalEditContainer"
       style="display: none; margin: 12px 0; text-align: left"

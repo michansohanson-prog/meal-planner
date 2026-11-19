@@ -380,7 +380,10 @@ form input:focus {
   font-weight: 600;
 }
 
-.meal-card button {
+.meal-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-top: 0.65rem;
 }
 
